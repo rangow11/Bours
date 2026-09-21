@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دفتر سهام</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دفتر سهام">
+<meta name="theme-color" content="#12160F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#EEF0EA; --surface:#F8F9F4; --surface-2:#E4E7DD; --ink:#1B2119; --ink-soft:#54594E;
+  --line:#D6DACB; --accent:#B5762C; --accent-ink:#5A3814; --accent-soft:#EFDDBE;
+  --pos:#2E7D4F; --pos-soft:#DCEEE1; --neg:#B23A2E; --neg-soft:#F6DEDA;
+  --font:'Vazirmatn',system-ui,sans-serif;
+  --radius:10px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --bg:#12160F; --surface:#181D14; --surface-2:#20261A; --ink:#EDEAE0; --ink-soft:#A3A896;
+    --line:#2C3323; --accent:#D79A4C; --accent-ink:#F3DFB8; --accent-soft:#3A2E17;
+    --pos:#4CA772; --pos-soft:#1B3226; --neg:#D9604C; --neg-soft:#3A2019;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#181D14; --surface-2:#20261A; --ink:#EDEAE0; --ink-soft:#A3A896;
+  --line:#2C3323; --accent:#D79A4C; --accent-ink:#F3DFB8; --accent-soft:#3A2E17;
+  --pos:#4CA772; --pos-soft:#1B3226; --neg:#D9604C; --neg-soft:#3A2019;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+html{scroll-padding-top:var(--safe-t);}
+body{
+  margin:0; font-family:var(--font); background:var(--bg); color:var(--ink);
+  padding-top:var(--safe-t); padding-bottom:var(--safe-b);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:var(--font); color:inherit;}
+input,select,textarea{
+  background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:10px 12px; font-size:15px; width:100%; color:var(--ink);
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.num{font-variant-numeric:tabular-nums; direction:ltr; text-align:right; unicode-bidi:plaio;}
+button{cursor:pointer; border:none; font-size:15px;}
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+/* App shell */
+#topbar{
+  position:sticky; top:0; z-index:20; padding-top:var(--safe-t);
+  background:var(--bg); border-bottom:1px solid var(--line);
+}
+.topbar-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 16px;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--surface);font-weight:800;font-size:15px;}
+.brand-name{font-weight:700; font-size:16px; letter-spacing:-.01em;}
+.icon-btn{width:38px;height:38px;border-radius:9px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+.icon-btn svg{width:18px;height:18px;stroke:var(--ink);}
+
+main{max-width:920px; margin:0 auto; padding:16px 16px calc(84px + var(--safe-b)); min-height:70vh;}
+
+/* professional Other menu */
+.other-menu{display:grid;gap:10px;}
+.other-menu-item{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:right;padding:15px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 10px rgba(0,0,0,.05);cursor:pointer;}
+.other-menu-item:active{transform:scale(.99);}
+.other-menu-item b{font-size:14px;color:var(--ink);}
+.other-menu-item .hint{margin-top:4px;color:var(--ink-soft);}
+
+/* bottom nav */
+#navbar{
+  position:fixed; bottom:0; right:0; left:0; z-index:30; padding-bottom:var(--safe-b);
+  background:var(--surface); border-top:1px solid var(--line);
+}
+.nav-inner{max-width:920px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr);}
+.nav-item{display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px 7px; background:transparent; color:var(--ink-soft); font-size:11px; min-width:0; touch-action:manipulation;}
+.nav-item svg{width:20px;height:20px;stroke:currentColor; fill:none; stroke-width:1.8;}
+.nav-item.active{color:var(--accent);}
+.nav-item.active svg{stroke:var(--accent);}
+html,body{overscroll-behavior-y:none;}
+#pullRefresh{position:fixed;top:calc(8px + var(--safe-t));left:50%;transform:translate(-50%,-70px);width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:0 5px 18px rgba(0,0,0,.14);z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none;transition:transform .22s ease,opacity .22s ease;opacity:0;}
+#pullRefresh.show{transform:translate(-50%,0);opacity:1;}
+#pullRefresh .dots{width:24px;height:24px;position:relative;}
+#pullRefresh i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);left:9px;top:9px;}
+#pullRefresh i:nth-child(1){transform:translateY(-8px);}
+#pullRefresh i:nth-child(2){transform:translateX(8px);}
+#pullRefresh i:nth-child(3){transform:translateY(8px);}
+#pullRefresh i:nth-child(4){transform:translateX(-8px);}
+#pullRefresh.spin .dots{animation:pullSpin .65s linear infinite;}
+@keyframes pullSpin{to{transform:rotate(360deg);}}
+/* professional mobile navigation / page motion */
+#navbar{bottom:0; transform:translate3d(0,0,0); will-change:transform; backface-visibility:hidden;}
+body{overscroll-behavior-y:none;}
+#app{will-change:transform,opacity;}
+#app.view-enter-from-right{animation:viewEnterFromRight .24s cubic-bezier(.22,.75,.25,1) both;}
+#app.view-enter-from-left{animation:viewEnterFromLeft .24s cubic-bezier(.22,.75,.25,1) both;}
+@keyframes viewEnterFromRight{from{opacity:.35;transform:translate3d(26px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes viewEnterFromLeft{from{opacity:.35;transform:translate3d(-26px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+.swipe-hint{touch-action:pan-y;}
+@media(max-width:520px){.nav-item{font-size:10.5px;padding-top:7px;padding-bottom:6px}.nav-item svg{width:19px;height:19px}}
+
+
+/* sections */
+.section-title{font-size:13px; color:var(--ink-soft); margin:22px 0 10px; font-weight:600;}
+.section-title:first-child{margin-top:0;}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+.row{display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-bottom:1px solid var(--line);}
+.row:last-child{border-bottom:none;}
+.row:active{background:var(--surface-2);}
+
+/* stat grid */
+.stats{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px;}
+.stat .lbl{font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+.stat .val{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;}
+.stat .val.pos{color:var(--pos);} .stat .val.neg{color:var(--neg);}
+
+.pill{display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:600;}
+.pill.pos{background:var(--pos-soft); color:var(--pos);}
+.pill.neg{background:var(--neg-soft); color:var(--neg);}
+.pill.muted{background:var(--surface-2); color:var(--ink-soft);}
+.pill.accent{background:var(--accent-soft); color:var(--accent-ink);}
+
+.btn{padding:11px 16px; border-radius:9px; background:var(--accent); color:#fff; font-weight:600; font-size:14.5px;}
+.btn.block{width:100%;}
+.btn.secondary{background:var(--surface-2); color:var(--ink);}
+.btn.ghost{background:transparent; color:var(--accent); padding:8px 10px;}
+.btn.danger{background:var(--neg-soft); color:var(--neg);}
+.btn.sm{padding:7px 12px; font-size:13px; border-radius:7px;}
+.btn:disabled{opacity:.45;}
+
+.fab{position:fixed; left:16px; bottom:calc(78px + var(--safe-b)); z-index:25; width:52px;height:52px;border-radius:16px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.22);}
+.fab svg{width:24px;height:24px;stroke:#fff; fill:none; stroke-width:2;}
+
+.empty{padding:40px 16px; text-align:center; color:var(--ink-soft);}
+.empty svg{width:34px;height:34px;stroke:var(--ink-soft); margin-bottom:10px;}
+.empty .t{font-size:14.5px; font-weight:600; color:var(--ink); margin-bottom:4px;}
+.empty .d{font-size:13px; line-height:1.9;}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
+.field .hint{font-size:11.5px; color:var(--ink-soft); margin-top:5px; line-height:1.7;}
+.field-row{display:flex; gap:10px;}
+.field-row>.field{flex:1;}
+.checkline{display:flex; align-items:center; gap:8px;}
+.checkline input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:var(--accent);}
+
+/* modal / sheet */
+.overlay{position:fixed; inset:0; background:rgba(10,12,8,.45); z-index:60; display:flex; align-items:flex-end; justify-content:center;}
+.sheet{
+  background:var(--bg); width:100%; max-width:560px; max-height:92vh; overflow:auto;
+  border-radius:18px 18px 0 0; padding:18px 18px calc(24px + var(--safe-b));
+}
+@media (min-width:640px){ .overlay{align-items:center;} .sheet{border-radius:16px; max-height:88vh;} }
+.sheet-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; position:sticky; top:0; background:var(--bg); padding-top:2px;}
+.sheet-head h2{font-size:17px; margin:0; font-weight:700;}
+
+table{width:100%; border-collapse:collapse; font-size:13.5px;}
+th{font-size:11.5px; color:var(--ink-soft); text-align:right; padding:6px 6px; font-weight:600; border-bottom:1px solid var(--line);}
+td{padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.qty-input{width:64px; padding:6px 7px; font-size:13.5px;}
+.price-input{width:96px; padding:6px 7px; font-size:13.5px;}
+
+.mask-toggle{background:none;border:none;color:var(--accent);font-size:12px;padding:2px 4px;}
+
+.search-bar{display:flex; gap:8px; margin-bottom:14px;}
+.chip-row{display:flex; gap:7px; overflow-x:auto; padding-bottom:2px; margin-bottom:14px;}
+.chip{white-space:nowrap; padding:7px 13px; border-radius:20px; background:var(--surface); border:1px solid var(--line); font-size:12.5px; color:var(--ink-soft);}
+.chip.active{background:var(--ink); color:var(--bg); border-color:var(--ink);}
+:root[data-theme="dark"] .chip.active, :root:not([data-theme="light"]) .chip.active{ }
+@media (prefers-color-scheme:dark){ .chip.active{background:var(--accent); color:#1b1204; border-color:var(--accent);} }
+:root[data-theme="dark"] .chip.active{background:var(--accent); color:#1b1204; border-color:var(--accent);}
+
+.toast{position:fixed; bottom:calc(90px + var(--safe-b)); right:50%; transform:translateX(50%); background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:10px; font-size:13.5px; z-index:80;}
+
+.person-tag{display:flex; align-items:center; justify-content:space-between; padding:11px 12px; border:1px solid var(--line); border-radius:9px; margin-bottom:8px; background:var(--surface);}
+.person-tag .name{font-weight:600; font-size:13.5px;}
+.person-tag .sub{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+
+.banner{padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.9; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;}
+.banner.info{background:var(--accent-soft); color:var(--accent-ink);}
+.banner svg{width:17px;height:17px;flex:none;margin-top:2px;}
+
+.api-status{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.7;}
+.symbol-match{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:7px;font-size:12px;line-height:1.8;}
+.symbol-match.ok{border-color:var(--pos);background:var(--pos-soft);}
+.symbol-match.warn{border-color:var(--accent);background:var(--accent-soft);}
+.alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.alert-mini{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:11.5px;line-height:1.8;}
+.refresh-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 10px;}
+@media(max-width:420px){.alert-grid{grid-template-columns:1fr;}}
+
+.jalali-date{cursor:pointer;background:var(--surface)!important;}
+.jalali-picker{position:fixed;z-index:200;inset:0;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;padding:16px;}
+.jcal{width:min(360px,100%);background:var(--bg);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.25);padding:14px;}
+.jcal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
+.jcal-title{font-weight:800;font-size:15px;text-align:center;flex:1;}
+.jcal-nav{border:1px solid var(--line);background:var(--surface);width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;}
+.jcal-week,.jcal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.jcal-week div{text-align:center;color:var(--ink-soft);font-size:11px;padding:5px 0;font-weight:700;}
+.jcal-day{border:1px solid transparent;background:var(--surface);border-radius:9px;min-height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;}
+.jcal-day:hover{border-color:var(--accent);}.jcal-day.today{border-color:var(--accent);}.jcal-day.selected{background:var(--accent);color:var(--accent-ink);font-weight:800;}
+.backup-card{display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:9px;}
+.backup-icon{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;font-size:20px;color:var(--accent-ink);font-weight:800;}
+.cash-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.cash-summary .stat{min-width:0;}
+.copy-card-btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:11px;cursor:pointer;color:var(--accent-ink);}
+@media(max-width:520px){.cash-summary{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><div class="brand-mark">دس</div><div class="brand-name">دفتر سهام</div></div>
+    <button class="icon-btn" onclick="openSettings()" aria-label="تنظیمات">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+    </button>
+  </div>
+</div>
+
+<main id="app"></main>
+<div id="pullRefresh" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i></div></div>
+
+<button class="fab" id="fabBtn" onclick="fabAction()" aria-label="ثبت جدید">
+  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+
+<div id="navbar">
+  <div class="nav-inner">
+    <button class="nav-item" data-view="dashboard" onclick="setView('dashboard')">
+      <span class="nav-icon-wrap"><svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 3h4v18h-4zM17 8h4v13h-4z"></path></svg><span id="saleAlertBadge" class="nav-badge" style="display:none"></span></span>داشبورد</button>
+    <button class="nav-item" data-view="people" onclick="setView('people')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg>اشخاص</button>
+    <button class="nav-item" data-view="shares" onclick="setView('shares')">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path></svg>عرضه اولیه‌ها</button>
+    <button class="nav-item" data-view="other" onclick="setView('other')">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>سایر</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- utilities ---------------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const uid4 = ()=>Math.random().toString(36).slice(2,10);
+const fmtNum = n => (n===null||n===undefined||isNaN(n)) ? '—' : Number(n).toLocaleString('en-US');
+const fmtToman = n => fmtNum(n) + ' تومان';
+const fmtDate = ts => { if(!ts) return '—'; const d=new Date(ts); return d.toLocaleDateString('fa-IR',{year:'numeric',month:'2-digit',day:'2-digit'}); };
+const fmtDateTime = ts => { if(!ts) return '—'; const d=new Date(ts); return d.toLocaleDateString('fa-IR',{month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}); };
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
+}
+function maskCard(num){
+  if(!num) return '—';
+  const s = num.replace(/\s/g,'');
+  if(s.length<=4) return s;
+  return '•••• •••• •••• ' + s.slice(-4);
+}
+function maskCvv(){ return '•••'; }
+
+/* ---------------- state ---------------- */
+const S = {
+  ready:false,
+  people:[], shares:[], purchases:[], sales:[], cashTransactions:[],
+  view:'dashboard', revealSensitive:false, expandedShareId:null,
+  apiKey:'', apiEndpoint:'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php',
+  filters:{ q:'', type:'all', status:'all' },
+};
+
+const STORAGE_KEY = 'sahm_ledger_v1';
+const SYMBOL_CATALOG = [{"id":"34144395039913458","l18":"عیار","l30":"صندوق طلای عیار مفید"},{"id":"6233172939132588","l18":"پتوسعه","l30":"س. و توسعه صنایع لاستیک"},{"id":"9155145921347611","l18":"زفارس","l30":"کشت وصنعت و دامپروری پگاه فارس"},{"id":"1438514795814416","l18":"یاقوت","l30":"صندوق س یاقوت آگاه-ثابت"},{"id":"29875801858560476","l18":"مهرگان","l30":"گروه مالی مهرگان تامین پارس"},{"id":"25559236668122210","l18":"کهربا","l30":"صندوق س.پشتوانه سکه طلا کهربا"},{"id":"46700660505281786","l18":"طلا","l30":"صندوق س.پشتوانه طلای لوتوس"},{"id":"32469128621155736","l18":"مثقال","l30":"صندوق س.پشتوانه طلای زرین آگاه"},{"id":"8175784894140974","l18":"فزر","l30":"پویا زرکان آق دره"},{"id":"17914401175772326","l18":"اهرم","l30":"صندوق س سهامی کاریزما- اهرمی"},{"id":"778253364357513","l18":"وبملت","l30":"بانک ملت"},{"id":"58514988269776425","l18":"گنج","l30":"صندوق س. طلا کیمیا زرین کاردان"},{"id":"3846143218462419","l18":"افران","l30":"صندوق س افرا نماد پایدار-ثابت"},{"id":"31039212000825988","l18":"آوند","l30":"صندوق س. آوند مفید-د"},{"id":"65883838195688438","l18":"خودرو","l30":"ایران‌ خودرو"},{"id":"67141987086032267","l18":"موج","l30":"ص.س.اهرمی موج فیروزه-س"},{"id":"31569200988534548","l18":"لبخند","l30":"صندوق س. لبخند فارابی-د"},{"id":"62235397452612911","l18":"دارا یکم","l30":"صندوق واسطه گری مالی یکم-سهام"},{"id":"44891482026867833","l18":"خساپا","l30":"سایپا"},{"id":"46348559193224090","l18":"فولاد","l30":"فولاد مبارکه اصفهان"},{"id":"53251602435454519","l18":"کیان","l30":"صندوق س. با درآمد ثابت کیان"},{"id":"67675656072510693","l18":"پالایش","l30":"صندوق پالایشی یکم-سهام"},{"id":"7745894403636165","l18":"شپنا","l30":"پالایش نفت اصفهان"},{"id":"46830341954511303","l18":"وآیند","l30":"بانک آینده"},{"id":"63917421733088077","l18":"وتجارت","l30":"بانک تجارت"},{"id":"28374437855144739","l18":"آلتون","l30":"صندوق س.پشتوانه طلاآسمان آلتون"},{"id":"7681671915916933","l18":"جهش","l30":"صندوق سهامی جهش فارابی-اهرمی"},{"id":"12390706505809150","l18":"گوهر","l30":"صندوق طلای کیان"},{"id":"10795723506538053","l18":"فیروزا","l30":"صندوق ارمغان فیروزه آسیا-ثابت"},{"id":"35425587644337450","l18":"فملی","l30":"ملی‌ صنایع‌ مس‌ ایران"},{"id":"33144542989832366","l18":"زرفام","l30":"صندوق س.پشتوانه طلا زرفام آشنا"},{"id":"71843282162462661","l18":"کارا","l30":"صندوق س. کارا -د"},{"id":"38544104313215500","l18":"جواهر","l30":"صندوق س.پشتوانه طلا دنای زاگرس"},{"id":"71483646978964608","l18":"ذوب","l30":"ذوب آهن اصفهان"},{"id":"51617145873056483","l18":"شتران","l30":"پالایش نفت تهران"},{"id":"64216772923447100","l18":"شتاب","l30":"صندوق س سهامی شتاب آگاه-اهرمی"},{"id":"41927452991671109","l18":"توان","l30":"صندوق س. اهرمی توان مفید-س"},{"id":"2400322364771558","l18":"شستا","l30":"سرمایه گذاری تامین اجتماعی"},{"id":"44604318643489231","l18":"بیدار","l30":"صندوق س سهامی بیدار-اهرمی"},{"id":"28255729477187163","l18":"زروان","l30":"صندوق س.پشتوانه طلازروان ویستا"},{"id":"6362118829011821","l18":"لیان","l30":"صندوق س.پشتوانه طلای لیان"},{"id":"14035144070182412","l18":"ریتون","l30":"صندوق س.پشتوانه طلاجام زرینپاد"},{"id":"58108537439201620","l18":"دوایکس","l30":"ص.س.اهرمی شاخصی کیان-س"},{"id":"38628771709301941","l18":"کیسون","l30":"شرکت کیسون"},{"id":"12913156843322499","l18":"نهال","l30":"صندوق س. طلای سرخ نوویرا"},{"id":"30282299500988269","l18":"آکورد","l30":"صندوق س. آرمان آتی کوثر-د"},{"id":"51200575796028449","l18":"سحرخیز","l30":"صندوق س. گروه زعفران سحرخیز"},{"id":"2589887561569709","l18":"خزامیا","l30":"زامیاد"},{"id":"2328862017676109","l18":"وسپه","l30":"سرمایه‌گذاری‌ سپه"},{"id":"44549439964296944","l18":"کالا","l30":"بورس کالای ایران"},{"id":"61805666737517582","l18":"درخشان","l30":"صندوق س.پشتوانه طلادرخشان آبان"},{"id":"53514992320442853","l18":"نگین","l30":"صندوق س.طلا زردیس خلیج فارس"},{"id":"24696953498398744","l18":"شگستر","l30":"گسترش سوخت سبززاگرس(سهامی عام)"},{"id":"19040514831923530","l18":"نوری","l30":"پتروشیمی نوری"},{"id":"20244389840999638","l18":"رز ترنج","l30":"صندوق س.پشتوانه طلای رز"},{"id":"12629673694762396","l18":"ارکیده","l30":"صندوق سرمایه گذاری ارکیده-ثابت"},{"id":"53204330224889981","l18":"تبرک","l30":"گروه کارخانجات صنعتی تبرک"},{"id":"18661507395759423","l18":"آلومینا","l30":"آلومینای ایران"},{"id":"33254899395816171","l18":"زر","l30":"صندوق س.پشتوانه طلای زرافشان"},{"id":"30582275818828857","l18":"ناب","l30":"صندوق س.پشتوانه طلا نهایت نگر"},{"id":"4369934250728330","l18":"غزر","l30":"صنعتی زر ماکارون"},{"id":"28864540805361867","l18":"فخوز","l30":"فولاد خوزستان"},{"id":"15494954332657697","l18":"همای","l30":"صندوق س همای آگاه-ثابت"},{"id":"28320293733348826","l18":"وبصادر","l30":"بانک صادرات ایران"},{"id":"9089296888187061","l18":"تابش","l30":"صندوق س.پشتوانه طلا تابان تمدن"},{"id":"8000351713789858","l18":"نان","l30":"صنایع غذایی رضوی"},{"id":"35389487611786089","l18":"جام","l30":"صندوق س.مبتنی بر کالای فارابی"},{"id":"48968268685622891","l18":"گلدا","l30":"صندوق س.پشتوانه طلای پاداش"},{"id":"41122066907413786","l18":"چخزر","l30":"صنایع چوب خزر کاسپین"},{"id":"45292762906823004","l18":"کلید","l30":"صندوق س خانه آگاه-املاک"},{"id":"50792786683910016","l18":"کرمان","l30":"س. توسعه و عمران استان کرمان"},{"id":"35831329532779850","l18":"نارنج اهرم","l30":"ص.س. اهرمی نارنج-س"},{"id":"23498719713662118","l18":"اونیکس","l30":"ص.س.درآمد ثابت کیمیا-د"},{"id":"17800036702302776","l18":"ثاخت","l30":"بین‌المللی‌توسعه‌ساختمان"},{"id":"66416853783916493","l18":"دی","l30":"بانک دی"},{"id":"6905737326614124","l18":"رپویا","l30":"پویا"},{"id":"16817885126368964","l18":"زرگر","l30":"صندوق س.پشتوانه طلا زرگرکارآمد"},{"id":"48990026850202503","l18":"خگستر","l30":"گسترش‌سرمایه‌گذاری‌ایران‌خودرو"},{"id":"71945594172117613","l18":"ارزش مسکن","l30":"ص.س.املاک ومستغلات ارزش مسکن"},{"id":"5968811612822747","l18":"ولنوین","l30":"لیزینگ اقتصاد نوین"},{"id":"17226661368470120","l18":"سپر","l30":"صندوق س سپر سرمایه بیدار- ثابت"},{"id":"33441514568901717","l18":"میدکو","l30":"توسعه معادن وص.معدنی خاورمیانه"},{"id":"25211433301660888","l18":"خپارس","l30":"پارس خودرو"},{"id":"60350996279289099","l18":"کاوه","l30":"فولاد کاوه جنوب کیش"},{"id":"26014913469567886","l18":"وغدیر","l30":"سرمایه‌گذاری‌غدیر(هلدینگ"},{"id":"35700344742885862","l18":"کگل","l30":"معدنی و صنعتی گل گهر"},{"id":"48753732042176709","l18":"شبریز","l30":"پالایش نفت تبریز"},{"id":"56987424987755487","l18":"آتش","l30":"صندوق س.پشتوانه طلا آتش فیروزه"},{"id":"20865316761157979","l18":"فاراک","l30":"ماشین‌ سازی‌ اراک"},{"id":"20453559648564964","l18":"مهر","l30":"سرمایه گذاری مهر"},{"id":"66818022341772870","l18":"اعتماد","l30":"صندوق س.اعتماد آفرین پارسیان-د"},{"id":"61920683599787147","l18":"پاسارگاد","l30":"صندوق س.درآمد ثابت پاسارگاد-د"},{"id":"60369091709615715","l18":"مهرمام","l30":"مهرمام میهن"},{"id":"62603302940123327","l18":"ونیرو","l30":"سرمایه‌گذاری‌نیرو"},{"id":"48010225447410247","l18":"وبانک","l30":"سرمایه گذاری گروه توسعه ملی"},{"id":"34718633636164421","l18":"کمند","l30":"صندوق س. با درآمد ثابت کمند"},{"id":"22811176775480091","l18":"اخابر","l30":"مخابرات ایران"},{"id":"64795751499397128","l18":"زمرد","l30":"صندوق س.پشتوانه طلا زمرد بیدار"},{"id":"12746730665870442","l18":"بهپاک","l30":"صنعتی بهپاک"},{"id":"4942127026063388","l18":"کاما","l30":"باما"},{"id":"23293437377896568","l18":"تاصیکو","l30":"سرمایه گذاری صدرتامین"},{"id":"46752599569017089","l18":"بترانس","l30":"ایران‌ ترانسفو"},{"id":"11427939669935844","l18":"اطلس","l30":"صندوق س.توسعه اطلس مفید-س"},{"id":"37614886280396031","l18":"وساپا","l30":"سرمایه‌گذاری‌ سایپا"},{"id":"46934177065273437","l18":"محتشم","l30":"نساجی هدیه البرز مشهد"},{"id":"5987841496184505","l18":"شگویا","l30":"پتروشیمی تندگویان"},{"id":"69171897374421261","l18":"فن افزار","l30":"توسعه فن افزار توسن"},{"id":"67244978897607661","l18":"وپایا","l30":"سرمایه گذاری پایا تدبیرپارسا"},{"id":"43283802997035462","l18":"وسبحان","l30":"سرمایه گذاری سبحان"},{"id":"10458396610199724","l18":"ماهور","l30":"صندوق سرمایه گذاری ماهور-ثابت"},{"id":"36844527173896115","l18":"زفجر","l30":"کشاورزی و دامپروری فجر اصفهان"},{"id":"23557166059925779","l18":"فصبا","l30":"صبا فولاد خلیج فارس"},{"id":"114312662654155","l18":"وسپهر","l30":"گروه سرمایه گذاری سپهر صادرات"},{"id":"69143674941561637","l18":"پترول","l30":"گ.س.وت.ص.پتروشیمی خلیج فارس"},{"id":"58810336532668771","l18":"کایزد","l30":"فرانسوز یزد"},{"id":"4507558419857064","l18":"زماهان","l30":"مجتمع تولید گوشت مرغ ماهان"},{"id":"9536587154100457","l18":"وپاسار","l30":"بانک پاسارگاد"},{"id":"43062880954780884","l18":"تپمپی","l30":"پمپ‌ سازی‌ ایران"},{"id":"69540585676934415","l18":"ددانا","l30":"داروسازی دانا"},{"id":"49632601495766480","l18":"کرومیت","l30":"توسعه معادن کرومیت کاوندگان"},{"id":"50100062518826135","l18":"دامین","l30":"داروسازی‌ امین"},{"id":"6043384171800349","l18":"ثشرق","l30":"سرمایه گذاری مسکن شمال شرق"},{"id":"25244329144808274","l18":"فارس","l30":"صنایع پتروشیمی خلیج فارس"},{"id":"26997316501080743","l18":"سشرق","l30":"سیمان‌ شرق"},{"id":"33716211077781594","l18":"خنور","l30":"نورایستا پلاستیک"},{"id":"49270349234092953","l18":"خاور","l30":"ایران خودرو دیزل"},{"id":"71758511001096824","l18":"غصینو","l30":"صنعتی مینو"},{"id":"13235547361447092","l18":"زاگرس","l30":"پتروشیمی زاگرس"},{"id":"4626686276232042","l18":"نفیس","l30":"صندوق س.پشتوانه طلای صبا"},{"id":"39751275523025334","l18":"اتکای","l30":"بیمه اتکایی ایرانیان"},{"id":"49641108336531623","l18":"انرژی","l30":"بورس انرژی ایران"},{"id":"34557241988629814","l18":"برکت","l30":"گروه دارویی برکت"},{"id":"58931793851445922","l18":"ومعادن","l30":"توسعه‌معادن‌وفلزات"},{"id":"28450080638096732","l18":"سیمرغ","l30":"سیمرغ"},{"id":"20562694899904339","l18":"شپدیس","l30":"پتروشیمی پردیس"},{"id":"57728534324022361","l18":"گنجین","l30":"صندوق س. گنجینه یکم آوید-د"},{"id":"35796086458096255","l18":"شیران","l30":"س. صنایع‌شیمیایی‌ایران"},{"id":"43362635835198978","l18":"های وب","l30":"داده گسترعصرنوین-های وب"},{"id":"20560887114747719","l18":"کسرام","l30":"پارس‌ سرام"},{"id":"45050389997905274","l18":"وسینا","l30":"بانک سینا"},{"id":"43716452378323683","l18":"فزرین","l30":"زرین معدن آسیا"},{"id":"53145304508578701","l18":"تمشک","l30":"صندوق س تمشک نماد رشد-در صندوق"},{"id":"38845574746937458","l18":"ستاره","l30":"ص.س.ستاره پایدارسپهر-د"},{"id":"23214828924506640","l18":"پکرمان","l30":"گروه‌ صنعتی‌ بارز"},{"id":"7803396484851273","l18":"کارآمد","l30":"صندوق س.درآمد ثابت کارآمد-د"},{"id":"65663173216130783","l18":"آواک","l30":"صنایع ارتباطی آوا"},{"id":"5286237676293152","l18":"سیسکو","l30":"فولاد سیرجان ایرانیان"},{"id":"50247622569476338","l18":"بوعلی","l30":"پتروشیمی بوعلی سینا"},{"id":"67717913151786055","l18":"دانیک","l30":"ص.س.املاک ومستغلات نیک رای"},{"id":"44153164692325703","l18":"شگل","l30":"گلتاش"},{"id":"43545527030854340","l18":"کویر","l30":"تولیدی فولاد سپید فراب کویر"},{"id":"15521712617204216","l18":"سفارس","l30":"سیمان فارس و خوزستان"},{"id":"47232550823972469","l18":"وتوکا","l30":"سرمایه‌گذاری‌توکافولاد(هلدینگ"},{"id":"62404730109947970","l18":"غکورش","l30":"صنعت غذایی کورش"},{"id":"23441366113375722","l18":"پارسان","l30":"گسترش نفت و گاز پارسیان"},{"id":"66772024744156373","l18":"فباهنر","l30":"مس‌ شهیدباهنر"},{"id":"14744445176220774","l18":"ثبهساز","l30":"بهساز کاشانه تهران"},{"id":"22645269567765904","l18":"خیمن","l30":"ایمن خودرو شرق"},{"id":"46982154647719707","l18":"وصنا","l30":"گروه‌صنایع‌بهشهرایران"},{"id":"59522975635235187","l18":"شمس","l30":"تولید انرژی برق شمس پاسارگاد"},{"id":"16959429956899455","l18":"شاملا","l30":"معدنی‌ املاح‌ ایران"},{"id":"70270965300262393","l18":"البرز","l30":"بیمه البرز"},{"id":"20411759370751096","l18":"کنور","l30":"توسعه معدنی و صنعتی صبانور"},{"id":"30852391633490755","l18":"ثفارس","l30":"عمران‌وتوسعه‌فارس"},{"id":"20652241232631918","l18":"نیان","l30":"نیان الکترونیک"},{"id":"11964419322927535","l18":"سرود","l30":"سیمان‌شاهرود"},{"id":"30829203706095076","l18":"ستران","l30":"سیمان‌ تهران"},{"id":"6237807001018762","l18":"قیراط","l30":"صندوق س.پشتوانه طلای دماوند"},{"id":"26824673819862694","l18":"خبهمن","l30":"گروه‌بهمن"},{"id":"61102694810476197","l18":"شپارس","l30":"بین‌ المللی‌ محصولات‌ پارس"},{"id":"66701874099226162","l18":"فاسمین","l30":"کالسیمین"},{"id":"7711282667602555","l18":"شاراک","l30":"پتروشیمی شازند"},{"id":"53350307353645375","l18":"غانیزان","l30":"فرآورده های دامی ولبنی دالاهو"},{"id":"28957320033282870","l18":"چکاپا","l30":"گروه صنایع کاغذ پارس"},{"id":"47333458678352378","l18":"وخاور","l30":"بانک خاورمیانه"},{"id":"18027801615184692","l18":"کچاد","l30":"معدنی‌وصنعتی‌چادرملو"},{"id":"30895446582685604","l18":"امرالد","l30":"صندوق س.پشتوانه طلای کیمیا"},{"id":"10114441830266109","l18":"گدنا","l30":"تهیه توزیع غذای دنا آفرین فدک"},{"id":"7395271748414592","l18":"وخارزم","l30":"سرمایه گذاری خوارزمی"},{"id":"19074684560939209","l18":"ومپنا","l30":"مدیریت نیروگاهی ایرانیان مپنا"},{"id":"54419429862704331","l18":"فروس","l30":"فروسیلیس‌ ایران"},{"id":"58741071099161284","l18":"فرابورس","l30":"فرابورس ایران"},{"id":"16422980660132735","l18":"لطیف","l30":"محصولات کاغذی لطیف"},{"id":"33808206014018431","l18":"سمازن","l30":"سیمان‌مازندران"},{"id":"47302318535715632","l18":"ونوین","l30":"بانک‌اقتصادنوین"},{"id":"3955332316338258","l18":"وطوبی","l30":"سرمایه گذاری اقتصاد شهر طوبی"},{"id":"33293588228706998","l18":"وپارس","l30":"بانک‌پارسیان"},{"id":"10120557300120078","l18":"پسهند","l30":"صنایع‌ لاستیکی‌ سهند"},{"id":"62069100905581368","l18":"سیمانو","l30":"صندوق س صنایع مفید3- بخشی"},{"id":"37281199178613855","l18":"سیدکو","l30":"سرمایه گذاری توسعه صنایع سیمان"},{"id":"10568944722570445","l18":"سصفها","l30":"سیمان‌اصفهان"},{"id":"3722699128879020","l18":"حتاید","l30":"تایدواترخاورمیانه"},{"id":"22312990497291517","l18":"سامان","l30":"بانک سامان"},{"id":"65321970913593427","l18":"سکرد","l30":"سیمان کردستان"},{"id":"29590002988360984","l18":"سپیدار","l30":"سپیدار سیستم آسیا"},{"id":"32784604551756178","l18":"پیزد","l30":"مجتمع صنایع لاستیک یزد"},{"id":"67261627618765635","l18":"خودران","l30":"صندوق س صنایع مفید2-بخشی"},{"id":"64842837716888827","l18":"خکاوه","l30":"سایپا دیزل"},{"id":"24303422207378456","l18":"غالبر","l30":"لبنیات‌ کالبر"},{"id":"35331248532537562","l18":"اردستان","l30":"سیمان اردستان"},{"id":"35948133957468680","l18":"سرچشمه","l30":"سرمایه گذاری مس سرچشمه"},{"id":"41302553376174581","l18":"فجر","l30":"فولاد امیرکبیرکاشان"},{"id":"43450146028916610","l18":"دزاگرس","l30":"دارویی و نهاده های زاگرس دارو"},{"id":"18568733593280948","l18":"ثامید","l30":"توسعه و عمران امید"},{"id":"18401147983387689","l18":"غپینو","l30":"پارس‌ مینو"},{"id":"21077182490095731","l18":"درین","l30":"صندوق س. درین بها بازار-د"},{"id":"22560050433388046","l18":"تاپیکو","l30":"س. نفت و گاز و پتروشیمی تأمین"},{"id":"53449700212786324","l18":"مارون","l30":"پتروشیمی مارون"},{"id":"11129387075131725","l18":"تملت","l30":"تامین سرمایه بانک ملت"},{"id":"65378630011538741","l18":"نبابک","l30":"نساجی بابکان"},{"id":"33887145736684266","l18":"آگاس","l30":"صندوق س.هستی بخش آگاه-س"},{"id":"7385624172574740","l18":"ورنا","l30":"سرمایه‌گذاری‌ رنا(هلدینگ"},{"id":"26780282166315918","l18":"ثبات","l30":"صندوق س. ثبات ویستا -د"},{"id":"25336820825905643","l18":"ونیکی","l30":"سرمایه‌گذاری‌ ملی‌ایران"},{"id":"17244733069907210","l18":"رزگلد","l30":"صندوق س.پشتوانه طلا آرمان آتی"},{"id":"67327029014085707","l18":"سخزر","l30":"سیمان‌ خزر"},{"id":"37120336886630649","l18":"بانکا","l30":"صندوق س صنایع آگاه4-بخشی"},{"id":"60247433951600827","l18":"شاوان","l30":"پالایش نفت لاوان"},{"id":"11427387039523955","l18":"شفام","l30":"تولیدی و صنعتی گوهرفام"},{"id":"25357135030606405","l18":"تنوین","l30":"تامین سرمایه نوین"},{"id":"64619251116188373","l18":"بپیوند","l30":"برق و انرژی پیوندگستر پارس"},{"id":"611986653700161","l18":"سبزوا","l30":"سیمان لار سبزوار"},{"id":"70498485598181604","l18":"هرمز","l30":"فولاد هرمزگان جنوب"},{"id":"10236455588057352","l18":"انتخاب","l30":"گروه انتخاب الکترونیک آرمان"},{"id":"14800142337291217","l18":"فولای","l30":"صنایع فولاد آلیاژی یزد"},{"id":"24253947487334809","l18":"معین","l30":"بیمه ایران - معین"},{"id":"61310599391543522","l18":"سباقر","l30":"سیمان باقران"},{"id":"65122215875355555","l18":"شفن","l30":"پتروشیمی فناوران"},{"id":"43552974795606067","l18":"خراسان","l30":"پتروشیمی خراسان"},{"id":"41713045190742691","l18":"وسدید","l30":"گروه ‌صنعتی‌سدید"},{"id":"5054819322815158","l18":"زمگسا","l30":"کشاورزی‌ ودامپروی‌ مگسال"},{"id":"62708526880913292","l18":"ساحل","l30":"ص.ساحل سرمایه امن خلیج فارس-د"},{"id":"35669480110084448","l18":"سپاها","l30":"سیمان‌سپاهان"},{"id":"9956888831468521","l18":"آردینه","l30":"نشاسته و گلوکز آردینه"},{"id":"51971068201094874","l18":"بپاس","l30":"بیمه پاسارگاد"},{"id":"383529400851043","l18":"الکتروماد","l30":"صنایع الکترونیک مادیران"},{"id":"8915450910866216","l18":"دزهراوی","l30":"داروسازی‌زهراوی"},{"id":"63481599728522324","l18":"ثشاهد","l30":"سرمایه‌ گذاری‌ شاهد"},{"id":"60610861509165508","l18":"حکشتی","l30":"کشتیرانی جمهوری اسلامی ایران"},{"id":"22275596386264204","l18":"کوثر","l30":"بیمه کوثر"},{"id":"14073782708315535","l18":"شنفت","l30":"نفت‌ پارس"},{"id":"70883594945615893","l18":"سآبیک","l30":"سیمان آبیک"},{"id":"28431095903407567","l18":"کاسپین","l30":"داروسازی کاسپین تامین"},{"id":"6757220448540984","l18":"سشمال","l30":"سیمان‌ شمال"},{"id":"6110133418282108","l18":"پارس","l30":"پتروشیمی پارس"},{"id":"29247915161590165","l18":"دلقما","l30":"دارویی‌ لقمان"},{"id":"39453972158399542","l18":"تداوم","l30":"صندوق تداوم اطمینان تمدن-ثابت"},{"id":"66295665969375744","l18":"سبجنو","l30":"سیمان‌ بجنورد"},{"id":"67126881188552864","l18":"رمپنا","l30":"گروه مپنا (سهامی عام)"},{"id":"25417476013479486","l18":"ساروج","l30":"بین المللی ساروج بوشهر"},{"id":"31078457170311964","l18":"ولشرق","l30":"لیزینگ ایران و شرق"},{"id":"18063426072758458","l18":"وبهمن","l30":"سرمایه‌گذاری‌بهمن"},{"id":"43781018754867729","l18":"شفارس","l30":"صنایع‌ شیمیایی‌ فارس"},{"id":"40553302624764543","l18":"وکغدیر","l30":"بین المللی توسعه ص. معادن غدیر"},{"id":"55127657985997520","l18":"آریا","l30":"پلیمر آریا ساسول"},{"id":"22299894048845903","l18":"غگل","l30":"گلوکوزان"},{"id":"45895339414786358","l18":"خرینگ","l30":"رینگ‌سازی‌مشهد"},{"id":"48287670503317419","l18":"ولبهمن","l30":"شرکت بهمن لیزینگ"},{"id":"34074071043606558","l18":"دارونو","l30":"صندوق س صنایع مفید5-بخشی"},{"id":"15949743338644220","l18":"ساروم","l30":"سیمان‌ارومیه"},{"id":"66142616039907394","l18":"دماوند","l30":"تولید نیروی برق دماوند"},{"id":"34213522001938649","l18":"عالیس","l30":"بهار رز عالیس چناران"},{"id":"35163287528816137","l18":"اعتبار","l30":"صندوق س. نوع دوم اعتبار-د"},{"id":"41974758296041288","l18":"سخوز","l30":"سیمان خوزستان"},{"id":"64973252728260903","l18":"وکبهمن","l30":"مدیریت سرمایه گذاری کوثربهمن"},{"id":"33629260529503413","l18":"بجهرم","l30":"توسعه مولد نیروگاهی جهرم"},{"id":"2434703913394836","l18":"غدشت","l30":"دشت‌ مرغاب"},{"id":"24653108506137885","l18":"کانسار","l30":"معدنکاران نسوز"},{"id":"28551661889797217","l18":"زیتون","l30":"صندوق س زیتون نماد پایا- مختلط"},{"id":"64942549055019553","l18":"سرو","l30":"صندوق س سروسودمند مدبران-سهام"},{"id":"10411249540376641","l18":"ناما","l30":"تولیدی مخازن گازطبیعی آسیاناما"},{"id":"14079693677610396","l18":"اسیاتک","l30":"انتقال داده های آسیاتک"},{"id":"52932092555708556","l18":"تکاردان","l30":"تامین سرمایه کاردان"},{"id":"14031158866706953","l18":"شراز","l30":"پالایش نفت شیراز"},{"id":"15917865009187760","l18":"مادیرا","l30":"صنایع مادیران"},{"id":"28809886765682162","l18":"حفاری","l30":"حفاری شمال"},{"id":"37284308569715577","l18":"فسبزوار","l30":"پارس فولاد سبزوار"},{"id":"14916489896692147","l18":"زملارد","l30":"کشاورزی و دامپروری ملارد شیر"},{"id":"57300230097485720","l18":"غگیلا","l30":"شیرپاستوریزه پگاه گیلان"},{"id":"37661500521100963","l18":"آبادا","l30":"تولید نیروی برق آبادان"},{"id":"53999651992586159","l18":"ثپردیس","l30":"سرمایه گذاری مسکن پردیس"},{"id":"13227300125161435","l18":"سصوفی","l30":"سیمان‌ صوفیان"},{"id":"12329519546621752","l18":"چدن","l30":"تولیدی چدن سازان"},{"id":"41781090739318251","l18":"تلیسه","l30":"دامداری تلیسه نمونه"},{"id":"11258722998911897","l18":"وسکاب","l30":"س.ص.بازنشستگی کارکنان بانکها"},{"id":"17248898258246807","l18":"درنا","l30":"صندوق س.پشتوانه طلای درنا"},{"id":"67988012428906654","l18":"دارو","l30":"کارخانجات‌داروپخش"},{"id":"3407806799514469","l18":"شاروم","l30":"پتروشیمی ارومیه"},{"id":"6131290133202745","l18":"غمهرا","l30":"تولیدی‌مهرام"},{"id":"57086055330734195","l18":"کرازی","l30":"کارخانجات‌تولیدی‌شیشه‌رازی"},{"id":"66726992874614788","l18":"دتوزیع","l30":"توزیع دارو پخش"},{"id":"12752224677923341","l18":"خریخت","l30":"صنایع‌ریخته‌گری‌ایران"},{"id":"68941822863885255","l18":"رافزا","l30":"رایان هم افزا"},{"id":"47996917271187218","l18":"وکار","l30":"بانک‌ کارآفرین"},{"id":"2318736941376687","l18":"خصدرا","l30":"صنعتی‌ دریایی‌ ایران"},{"id":"65249046611427924","l18":"فردا","l30":"صندوق س آوای فردای زاگرس-ثابت"},{"id":"16693610252404739","l18":"ثالوند","l30":"سرمایه گذاری مسکن الوند"},{"id":"32347247706508046","l18":"ساوه","l30":"سیمان ساوه"},{"id":"65004959184388996","l18":"فایرا","l30":"آلومینیوم‌ایران"},{"id":"66315581735594751","l18":"توسن","l30":"توسعه سامانه ی نرم افزاری نگین"},{"id":"61978776664766359","l18":"غپونه","l30":"نوش پونه مشهد"},{"id":"28328083629154916","l18":"سجام","l30":"مجتمع سیمان غرب آسیا"},{"id":"58873907630765023","l18":"امین","l30":"تامین سرمایه امین"},{"id":"67690708346979840","l18":"کماسه","l30":"تامین‌ ماسه‌ ریخته‌گری"},{"id":"10171945867136336","l18":"سیتا","l30":"سرمایه گذاری سیمان تامین"},{"id":"48517714910707769","l18":"بپویا","l30":"دانش بنیان پویا نیرو"},{"id":"29758477602878557","l18":"تیپیکو","l30":"سرمایه گذاری دارویی تامین"},{"id":"28672095850798501","l18":"غسالم","l30":"سالمین"},{"id":"48241092863917835","l18":"ولپارس","l30":"لیزینگ پارسیان"},{"id":"17528249960294496","l18":"وتوسم","l30":"سرمایه‌گذاری‌توسعه‌ملی"},{"id":"68517032834363488","l18":"شبصیر","l30":"تولیدات پتروشیمی قائد بصیر"},{"id":"1625149423498289","l18":"حسینا","l30":"توسعه خدمات دریایی وبندری سینا"},{"id":"41935584690956944","l18":"پتایر","l30":"ایران‌ تایر"},{"id":"56550776668133562","l18":"دفارا","l30":"داروسازی‌ فارابی"},{"id":"60523145697836739","l18":"بورس","l30":"بورس اوراق بهادار تهران"},{"id":"37389789764168256","l18":"توریل","l30":"توکاریل"},{"id":"59641261891847088","l18":"معدن","l30":"صندوق س صنایع مفید6- بخشی"},{"id":"655060129740445","l18":"اپال","l30":"فرآوری معدنی اپال کانی پارس"},{"id":"52382684379473036","l18":"دکپسول","l30":"تولید ژلاتین کپسول ایران"},{"id":"68488673556087148","l18":"فپنتا","l30":"سپنتا"},{"id":"9098178887955847","l18":"شهر","l30":"گروه مالی شهر"},{"id":"27922860956133067","l18":"مبین","l30":"مبین انرژی خلیج فارس"},{"id":"39884565732277052","l18":"کیمیاتک","l30":"آریان کیمیا تک"},{"id":"47702059190622416","l18":"ثتوسا","l30":"س.توسعه و عمران استان اردبیل"},{"id":"4614779520007780","l18":"کسرا","l30":"سرامیک‌های‌صنعتی‌اردکان"},{"id":"22087269603540841","l18":"وپست","l30":"پست بانک ایران"},{"id":"44967158778304588","l18":"قثابت","l30":"قند ثابت‌ خراسان"},{"id":"3654864906585643","l18":"تکنو","l30":"تکنوتار"},{"id":"54676885047867737","l18":"وتوشه","l30":"سرمایه‌ گذاری‌ پارس‌ توشه"},{"id":"40611478183231802","l18":"شدوص","l30":"دوده‌ صنعتی‌ پارس"},{"id":"30765727085936322","l18":"فجام","l30":"جام‌دارو"},{"id":"5427792638736934","l18":"زفکا","l30":"کشت و دامداری فکا"},{"id":"60780601612983313","l18":"تایرا4","l30":"تراکتورسازی‌ایران"},{"id":"7854238750997270","l18":"نبات","l30":"صندوق س. بخشی صنایع دانایان1-ب"},{"id":"45507655586782998","l18":"فجهان","l30":"جهان فولاد سیرجان"},{"id":"25514780181345713","l18":"وساخت","l30":"سرمایه‌ گذاری‌ ساختمان‌ایران"},{"id":"37089148943784077","l18":"خبنیان","l30":"بنیان دیزل"},{"id":"43009306066217458","l18":"دامون","l30":"ص.س. درآمد ثابت آسمان دامون-د"},{"id":"52587750999094180","l18":"نیشکر","l30":"توسعه نیشکر و صنایع جانبی"},{"id":"71571639927013317","l18":"فالوم","l30":"آلومتک"},{"id":"25079426576214829","l18":"خبرنا","l30":"تولیدی برنا باطری"},{"id":"31879190587976736","l18":"خوساز","l30":"محورسازان‌ایران‌خودرو"},{"id":"68376789401977331","l18":"گلدیس","l30":"صندوق س.پشتوانه طلا گلدیس نوین"},{"id":"4528607775462304","l18":"سفانو","l30":"سیمان فارس نو"},{"id":"70595828753641750","l18":"پارند","l30":"صندوق س. پارند پایدار سپهر"},{"id":"41284516796232939","l18":"سهگمت","l30":"سیمان‌هگمتان"},{"id":"12490072956930435","l18":"مدیریت","l30":"س. و خدمات مدیریت صند. ب کشوری"},{"id":"47348197320716810","l18":"دسانکو","l30":"داروسازی سبحان انکولوژی"},{"id":"12387472624849835","l18":"داسوه","l30":"داروسازی‌ اسوه"},{"id":"63580313877463104","l18":"پاسا","l30":"ایران‌یاساتایرورابر"},{"id":"33938004134399485","l18":"صبا","l30":"گروه مالی صبا تامین"},{"id":"11622051128546106","l18":"شپاکسا","l30":"پاکسان"},{"id":"19348717261145458","l18":"وهامون","l30":"سرمایه گذاری هامون صبا"},{"id":"35424116338766901","l18":"حفارس","l30":"حمل و نقل بین المللی خلیج فارس"},{"id":"58482817740704549","l18":"خکرمان","l30":"سرمایه گذاری آرمان گستر پاریز"},{"id":"30193497253835819","l18":"شبریز4","l30":"پالایش نفت تبریز"},{"id":"37828981835497620","l18":"پتروآگاه","l30":"صندوق س صنایع آگاه1-بخشی"},{"id":"47973532381204870","l18":"بیوتیک","l30":"آنتی بیوتیک سازی ایران"},{"id":"2944500421562364","l18":"وتوصا","l30":"گروه س توسعه صنعتی ایران"},{"id":"27308217070238237","l18":"شکربن","l30":"کربن‌ ایران"},{"id":"27096851668435724","l18":"جم پیلن","l30":"پتروشیمی جم پیلن"},{"id":"51017863148152520","l18":"فرود","l30":"فولاد شاهرود"},{"id":"38568786927478796","l18":"شیراز","l30":"پتروشیمی‌شیراز"},{"id":"13937270451301973","l18":"وبشهر","l30":"توسعه‌ صنایع‌ بهشهر(هلدینگ"},{"id":"56324206651661881","l18":"فنورد","l30":"نوردوقطعات‌ فولادی"},{"id":"7457232989848872","l18":"خمحور","l30":"تولیدمحورخودرو"},{"id":"45641540066710190","l18":"لکما","l30":"کارخانجات‌مخابراتی‌ایران"},{"id":"52846735736632974","l18":"صنهال","l30":"صندوق س. نهال ایرانیان-ثابت"},{"id":"63915926161403347","l18":"خشرق","l30":"الکتریک‌ خودرو شرق"},{"id":"54482686501491508","l18":"زبینا","l30":"کشاورزی و دامپروری بینالود"},{"id":"45205530868811305","l18":"صایند","l30":"صندوق س. گنجینه آینده روشن-د"},{"id":"5599691633622269","l18":"بخاور","l30":"بیمه زندگی خاورمیانه"},{"id":"9698674686691945","l18":"کپارس","l30":"کاشی‌ پارس"},{"id":"4563413583000719","l18":"ساراب","l30":"سیمان‌ داراب"},{"id":"52220424531578944","l18":"سغرب","l30":"سیمان‌غرب"},{"id":"11326461864120062","l18":"کربن","l30":"کانی کربن طبس"},{"id":"45519261544951819","l18":"سپید","l30":"سپید ماکیان"},{"id":"54277068923045214","l18":"فسرب","l30":"ملی‌ سرب‌وروی‌ ایران"},{"id":"12874072841236826","l18":"فسازان","l30":"غلتک سازان سپاهان"},{"id":"49054891736433700","l18":"دعبید","l30":"لابراتوارداروسازی‌ دکترعبیدی"},{"id":"22903901709044823","l18":"ختراک","l30":"ریخته‌گری‌ تراکتورسازی‌ ایران"},{"id":"22255783119783047","l18":"درازک","l30":"دارویی‌ رازک"},{"id":"51063357877632134","l18":"دسبحاح","l30":"ح .گروه دارویی سبحان"},{"id":"48511238766369097","l18":"دانا","l30":"بیمه دانا"},{"id":"7235435095059069","l18":"پکویر","l30":"کویر تایر"},{"id":"18599703143458101","l18":"امید","l30":"تامین سرمایه امید"},{"id":"39436183727126211","l18":"خمحرکه","l30":"نیرو محرکه"},{"id":"54369290104873523","l18":"بتک","l30":"کارخانجات کابل سازی‌ تک"},{"id":"55897939403232751","l18":"لسرما","l30":"سرما آفرین"},{"id":"57551382352708199","l18":"غگز","l30":"صنایع غذایی سکه"},{"id":"51390991364277477","l18":"سلیم","l30":"سرمایه گذاری سلیم"},{"id":"33527290777160784","l18":"رابین","l30":"صندوق س. توسعه افق رابین-د"},{"id":"41379697187196382","l18":"وشهر","l30":"بانک شهر"},{"id":"71068313834275501","l18":"بگیلان","l30":"توسعه مسیر برق گیلان"},{"id":"55373808401388162","l18":"فتوسا","l30":"تولید و توسعه سرب روی ایرانیان"},{"id":"57639364758870873","l18":"کپشیر","l30":"پشم‌شیشه‌ایران"},{"id":"19257295292088310","l18":"خکمک","l30":"کمک‌فنرایندامین"},{"id":"14398278072324784","l18":"قهکمت","l30":"قندهکمتان"},{"id":"64843936383937546","l18":"غگلستا","l30":"شیر پاستوریزه پگاه گلستان"},{"id":"21432551703060846","l18":"حآفرین","l30":"ریل پرداز نو آفرین"},{"id":"1822787329898392","l18":"کلر","l30":"کلر پارس"},{"id":"24907784641855842","l18":"استیل","l30":"صندوق س صنایع مفید1- بخشی"},{"id":"23269285154135003","l18":"جوین","l30":"کشت و صنعت جوین"},{"id":"38437201078089290","l18":"کرماشا","l30":"صنایع پتروشیمی کرمانشاه"},{"id":"48261930411425125","l18":"بمولد","l30":"مولد نیروگاهی تجارت فارس"},{"id":"16056283141617755","l18":"کارین","l30":"صندوق س نگین سامان-ثابت"},{"id":"21772258644715569","l18":"شغدیر","l30":"پتروشیمی غدیر"},{"id":"59217041815333317","l18":"خکار","l30":"ایرکا پارت صنعت"},{"id":"35964395659427029","l18":"قشکر","l30":"شکر"},{"id":"39610074039667804","l18":"قرن","l30":"پدیده شیمی قرن"},{"id":"51106317433079213","l18":"آسیا","l30":"بیمه آسیا"},{"id":"57309221039930244","l18":"وصنعت","l30":"سرمایه گذاری توسعه صنعت وتجارت"},{"id":"61469668095573716","l18":"ولکار","l30":"لیزینگ کارآفرین"},{"id":"13243992182070788","l18":"درهآور","l30":"دارویی ره آورد تامین"},{"id":"38547060135156069","l18":"فاذر","l30":"صنایع‌ آذرآب"},{"id":"60654872678917533","l18":"سقاین","l30":"سیمان‌ قائن"},{"id":"70289374539527245","l18":"ختوقا","l30":"قطعات‌ اتومبیل‌ ایران"},{"id":"40411537531154482","l18":"قصفها","l30":"قنداصفهان"},{"id":"50011948410571353","l18":"ولتجار","l30":"واسپاری تجارایرانیان"},{"id":"793710053482057","l18":"لپیام","l30":"گسترش صنایع پیام"},{"id":"16553062355259729","l18":"بمیلا","l30":"توسعه سرمایه گذاری میلاد پارس"},{"id":"42075223783409640","l18":"خاذین","l30":"سایپاآذین"},{"id":"34552750623263639","l18":"پلاست","l30":"کارخانجات تولیدی پلاستیران"},{"id":"60814442160947301","l18":"فملی4","l30":"ملی‌ صنایع‌ مس‌ ایران"},{"id":"45284811973404357","l18":"یارا","l30":"صندوق س. آریا-د"},{"id":"45174198424472334","l18":"ولساپا","l30":"لیزینگ رایان‌ سایپا"},{"id":"12638840758449459","l18":"پخش","l30":"پخش البرز"},{"id":"61506294208022391","l18":"غشصفا","l30":"شیرپاستوریزه‌پگاه‌اصفهان"},{"id":"67868738676326187","l18":"اخشان","l30":"اخشان خراسان"},{"id":"14427168056799610","l18":"کیمیا","l30":"ص. معدنی کیمیای زنجان گستران"},{"id":"48623320733330408","l18":"فلوله","l30":"لوله‌وماشین‌سازی‌ایران"},{"id":"23936607891892333","l18":"چافست","l30":"افست"},{"id":"37842793167868642","l18":"غویتا","l30":"ویتانا"},{"id":"43267179898797137","l18":"پاداش","l30":"صندوق س. ارزش پاداش-د"},{"id":"15039949673085566","l18":"پردیس","l30":"سرمایه گذاری پردیس"},{"id":"46741025610365786","l18":"سمگا","l30":"گروه سرمایه گذاری میراث فرهنگی"},{"id":"23374429962331387","l18":"کتوسعه","l30":"توسعه صنایع و معادن کوثر"},{"id":"15472396110662150","l18":"سکرما","l30":"سیمان‌ کرمان"},{"id":"24785665268004766","l18":"وپویا","l30":"سرمایه گذاری پویا"},{"id":"43622578471330344","l18":"دسبحا","l30":"گروه دارویی سبحان"},{"id":"59142194115401696","l18":"لوتوس","l30":"تامین سرمایه لوتوس پارسیان"},{"id":"23600798892801694","l18":"قچار","l30":"فراوردههای غذایی وقند چهارمحال"},{"id":"32678431934327184","l18":"کلوند","l30":"کاشی‌ الوند"},{"id":"33783140337377394","l18":"خچرخش","l30":"چرخشگر"},{"id":"28325731560106431","l18":"کساپا","l30":"سایپاشیشه"},{"id":"55070742656326885","l18":"پایا","l30":"صندوق س.پایا قلک پویا-د"},{"id":"54509759694064219","l18":"تپکو","l30":"تولیدتجهیزات‌سنگین‌هپکو"},{"id":"15259343650667588","l18":"قزوین","l30":"کارخانجات‌ قند قزوین"},{"id":"70309338813767186","l18":"فکمند","l30":"گسترش قطعه سازی کمند"},{"id":"19060410060488876","l18":"طلوع","l30":"صندوق س.طلوع نوین ثابت-د"},{"id":"48287767791629523","l18":"رشد","l30":"صندوق س.رشد پایدار آبان-د"},{"id":"1241998328504490","l18":"نشان","l30":"صندوق س. نشان هامرز-د"},{"id":"40374861063260484","l18":"اکتان","l30":"صندوق س صنایع مفید4-بخشی"},{"id":"68863997659126807","l18":"داتام","l30":"گروه مالی داتام"},{"id":"16040900750729921","l18":"کامیاب","l30":"صندوق س. کامیاب آشنا-د"},{"id":"57875847776839336","l18":"فنوال","l30":"نورد آلومینیوم"},{"id":"60162288821230099","l18":"تماوند","l30":"تامین سرمایه دماوند"},{"id":"3492952121304423","l18":"غدیس","l30":"پاکدیس"},{"id":"17617474823279712","l18":"آ س پ","l30":"آ.س.پ"},{"id":"49502666250908008","l18":"افق","l30":"فروشگاههای زنجیره ای افق کوروش"},{"id":"8977441217024425","l18":"فسپا","l30":"گروه‌صنعتی‌سپاهان"},{"id":"32257753560585502","l18":"کحافظ","l30":"کاشی‌ وسرامیک‌ حافظ"},{"id":"37073830945037165","l18":"آفاق","l30":"صندوق س نوع دوم افق آتی-ثابت"},{"id":"30703140537034664","l18":"کگهر","l30":"معدنی و صنعتی گهرزمین"},{"id":"30447901674051381","l18":"ومدیر","l30":"گ.مدیریت ارزش سرمایه ص ب کشوری"},{"id":"57191287546444240","l18":"زمرد کوروش","l30":"صندوق س زمرد کوروش-ثابت"},{"id":"21096748051392414","l18":"سغدیر","l30":"توسعه سرمایه و صنعت غدیر"},{"id":"62177651435283872","l18":"شکلر","l30":"نیروکلر"},{"id":"43342306308122676","l18":"قمرو","l30":"قند مرودشت"},{"id":"27695838950009037","l18":"شارپیلن","l30":"پتروشیمی ارغوان گسترایلام"},{"id":"22260326095996531","l18":"حتوکا","l30":"حمل‌ونقل‌توکا"},{"id":"204092872752957","l18":"شصدف","l30":"صنعتی دوده فام"},{"id":"34673681828119297","l18":"فاما","l30":"صنعتی‌ آما"},{"id":"17834623106317041","l18":"خنصیر","l30":"مهندسی‌نصیرماشین"},{"id":"62107151670661969","l18":"بکابل","l30":"سیم و کابل ابهر"},{"id":"39116664428676213","l18":"شلعاب","l30":"لعابیران"},{"id":"1301069819790264","l18":"تجلی","l30":"تجلی توسعه معادن و فلزات"},{"id":"62786156501584862","l18":"پاکشو","l30":"گروه صنعتی پاکشو"},{"id":"59612098290740355","l18":"آباد","l30":"توریستی ورفاهی آبادگران ایران"},{"id":"71076372178147339","l18":"داریک","l30":"صندوق س.اعتماد داریک-د"},{"id":"8725363201030474","l18":"فگستر","l30":"گسترش صنایع روی ایرانیان"},{"id":"50185721305191887","l18":"ختور","l30":"رادیاتور ایران"},{"id":"59607545337891226","l18":"پرداخت","l30":"به پرداخت ملت"},{"id":"59921975187856916","l18":"غشاذر","l30":"پگاه‌آذربایجان‌غربی"},{"id":"20487994977117557","l18":"غشهد","l30":"شهد ایران"},{"id":"67455383896188985","l18":"جوانه کوچک","l30":"صندوق س.جوانه کوچک گندم-سهام"},{"id":"15420554853151242","l18":"ثمر","l30":"صندوق س ثمرگندم-ثابت"},{"id":"30974710508383145","l18":"شسینا","l30":"صنایع‌شیمیایی‌سینا"},{"id":"22086876724551482","l18":"بموتو","l30":"موتوژن"},{"id":"28291104595448527","l18":"کزغال","l30":"زغال سنگ پروده طبس"},{"id":"4470657233334072","l18":"سخاش","l30":"سیمان‌خاش"},{"id":"34065519324250824","l18":"زکوثر4","l30":"سرمایه گذاری کشاورزی کوثر"},{"id":"22667016906590506","l18":"شبهرن","l30":"نفت‌ بهران"},{"id":"38555056423456635","l18":"شتوکا","l30":"توکا رنگ فولاد سپاهان"},{"id":"57273529732791251","l18":"خموتور","l30":"موتورسازان‌تراکتورسازی‌ایران"},{"id":"38084304113529336","l18":"خدیزل","l30":"بهمن دیزل"},{"id":"33611155027418901","l18":"غشهداب","l30":"کشت و صنعت شهداب ناب خراسان"},{"id":"55308018877404137","l18":"سام","l30":"صندوق س.درآمد ثابت سام-د"},{"id":"70391097626818082","l18":"گشان","l30":"توسعه بین المللی پدیده شاندیز"},{"id":"7104496710718469","l18":"آرامش","l30":"صندوق سرمایه گذاری آرامش-ثابت"},{"id":"18883380772506226","l18":"ثرود","l30":"سرمایه‌گذاری مسکن زاینده رود"},{"id":"69847139870135237","l18":"اوان","l30":"مبین وان کیش"},{"id":"5187018329202415","l18":"لپارس","l30":"پارس‌ الکتریک"},{"id":"27952969918967492","l18":"رکیش","l30":"کارت اعتباری ایران کیش"},{"id":"4523009251964699","l18":"خورشید","l30":"صندوق س. طلوع تدبیر پایا-د"},{"id":"8977369674477111","l18":"کطبس","l30":"ذغال‌سنگ‌ نگین‌ ط‌بس"},{"id":"69454539056549106","l18":"بشهاب","l30":"لامپ‌ پارس‌ شهاب"},{"id":"4733285133017464","l18":"فخاس","l30":"فولاد خراسان"},{"id":"16405556680571453","l18":"کخاک","l30":"صنایع‌خاک‌چینی‌ایران"},{"id":"26547785441834730","l18":"زشریف","l30":"کشت وصنعت شریف آباد"},{"id":"5564768007356822","l18":"حریل","l30":"ریل پردازسیر"},{"id":"18865325633315847","l18":"خاتم","l30":"صندوق س خاتم ایساتیس پویا-ثابت"},{"id":"42599305106713939","l18":"زکوثر","l30":"سرمایه گذاری کشاورزی کوثر"},{"id":"3623921205367364","l18":"کدما","l30":"معدنی‌ دماوند"},{"id":"7300125658580126","l18":"زکشت","l30":"کشاورزی مکانیزه اصفهان کشت"},{"id":"29974853866926823","l18":"فروی","l30":"ذوب روی اصفهان"},{"id":"52232388263291380","l18":"وامید","l30":"گروه مدیریت سرمایه گذاری امید"},{"id":"61298636307861167","l18":"وبرق","l30":"س.کارکنان صنعت برق زنجان وقزوی"},{"id":"8646067353086740","l18":"بالاس","l30":"مهندسی ساختمان تاسیسات راه آهن"},{"id":"17939384202383793","l18":"ثغرب","l30":"شرکت سرمایه گذاری مسکن شمالغرب"},{"id":"47749661205825616","l18":"سیستم","l30":"همکاران سیستم"},{"id":"22501232035732859","l18":"وثنو","l30":"سرمایه گذاری ساختمانی نوین"},{"id":"33406621820337161","l18":"دجابر","l30":"داروسازی‌ جابرابن‌حیان"},{"id":"63499217872110599","l18":"کقزوی","l30":"شیشه‌ قزوین"},{"id":"41048299027409941","l18":"رتاپ","l30":"تجارت الکترونیک پارسیان"},{"id":"22382156782768756","l18":"بکام","l30":"کارخانجات تولیدی شهید قندی"},{"id":"31987503418964901","l18":"آریان","l30":"سرمایه گذاری پارس آریان"},{"id":"45353845483523901","l18":"کیانا","l30":"گروه مالی کیان"},{"id":"59866041653103343","l18":"نوین","l30":"بیمه نوین"},{"id":"48619517949257749","l18":"غنوش","l30":"نوش‌ مازندران"},{"id":"70474983732269112","l18":"دپارس","l30":"پارس‌ دارو"},{"id":"28845264556937486","l18":"شپلی","l30":"پلی اکریل ایران"},{"id":"18093681647131179","l18":"دتولید","l30":"داروسازی تولید دارو"},{"id":"34641719089573667","l18":"دتماد","l30":"تولیدمواداولیه‌داروپخش"},{"id":"23086515493897579","l18":"ولغدر","l30":"لیزینگ‌خودروغدیر"},{"id":"3863538898378476","l18":"ثمسکن","l30":"سرمایه‌گذاری‌ مسکن"},{"id":"14230681955555738","l18":"آرام","l30":"صندوق س شاخصی آرام مفید"},{"id":"26090464295830176","l18":"ونیکیح","l30":"ح . سرمایه‌گذاری‌ ملی‌ایران"},{"id":"36002182682381562","l18":"وسپه4","l30":"سرمایه‌گذاری‌ سپه"},{"id":"71510396252618330","l18":"دبالک","l30":"مواد اولیه دارویی البرز بالک"},{"id":"27218386411183410","l18":"سدور","l30":"سیمان‌ دورود"},{"id":"68635710163497089","l18":"همراه","l30":"شرکت ارتباطات سیار ایران"},{"id":"28251956446987982","l18":"شمواد","l30":"تولید مواداولیه الیاف مصنوعی"},{"id":"26259366519412975","l18":"زشگزا","l30":"شیر و گوشت زاگرس شهرکرد"},{"id":"17330546482145553","l18":"خمهر","l30":"مهرکام‌پارس"},{"id":"47041908051542008","l18":"هم وزن","l30":"صندوق س. شاخصی کیان-س"},{"id":"50633804639547462","l18":"کمرجان","l30":"بازرگانی و تولیدی مرجان کار"},{"id":"7173358342361500","l18":"وغدیر4","l30":"سرمایه‌گذاری‌غدیر(هلدینگ"},{"id":"18004480270695404","l18":"فمراد","l30":"آلومراد"},{"id":"42387718866026650","l18":"غبشهر","l30":"صنعتی‌ بهشهر"},{"id":"17284166795866794","l18":"واحیا","l30":"م .صنایع و معادن احیاء سپاهان"},{"id":"24085906177899789","l18":"کترام","l30":"تولیدی‌ کاشی‌ تکسرام"},{"id":"28033133021443774","l18":"خفنر","l30":"فنرسازی‌خاور"},{"id":"43256212620530446","l18":"کبافق","l30":"معادن‌ بافق"},{"id":"49353447565507376","l18":"کاذر","l30":"فرآورده‌های‌نسوزآذر"},{"id":"3493306453706327","l18":"شوینده","l30":"مدیریت صنعت شوینده ت.ص.بهشهر"},{"id":"62977319271289925","l18":"کی بی سی","l30":"شرکت کی بی سی"},{"id":"28147934478934110","l18":"فغدیر","l30":"آهن و فولاد غدیر ایرانیان"},{"id":"23175320865252772","l18":"وسالت","l30":"بانک قرض الحسنه رسالت"},{"id":"39807886630843041","l18":"بمپنا","l30":"تولید برق عسلویه مپنا"},{"id":"21501758781665781","l18":"غمارگ","l30":"مارگارین"},{"id":"34540569618314880","l18":"قاسم","l30":"قاسم ایران"},{"id":"36282416082320053","l18":"والماس","l30":"س. الماس حکمت ایرانیان"},{"id":"22956708386610464","l18":"خودکفا","l30":"اقتصادی و خودکفایی آزادگان"},{"id":"38428194580055973","l18":"شیلد","l30":"صندوق س مشترک پارس-مختلط"},{"id":"40808043719554948","l18":"فولاژ","l30":"فولاد آلیاژی ایران"},{"id":"57944184894703821","l18":"والبر","l30":"سرمایه‌ گذاری‌ البرز(هلدینگ"},{"id":"41796741644273824","l18":"وملی","l30":"گروه‌ صنعتی‌ ملی‌ (هلدینگ"},{"id":"28253678449273505","l18":"حخزر","l30":"کشتیرانی دریای خزر"},{"id":"47416227147687994","l18":"سفارس4","l30":"سیمان فارس و خوزستان"},{"id":"43951910415124966","l18":"وگستر","l30":"گسترش سرمایه گذاری ایرانیان"},{"id":"67206358287598044","l18":"کهمدا","l30":"شیشه‌ همدان"},{"id":"15726796686853780","l18":"ثعمرا","l30":"عمران و توسعه شاهد"},{"id":"28328710198554144","l18":"وبوعلی","l30":"سرمایه‌گذاری‌بوعلی"},{"id":"56871139881800017","l18":"توسکا","l30":"صندوق س توسعه فولاد- ثابت"},{"id":"20453828618330936","l18":"بنیرو","l30":"نیروترانس"},{"id":"16673205196919832","l18":"شفارا","l30":"پتروشیمی فارابی"},{"id":"33420285433308219","l18":"زپارس","l30":"ملی کشت و صنعت و دامپروری پارس"},{"id":"47026464823464687","l18":"ومهان","l30":"گروه توسعه مالی مهرآیندگان"},{"id":"5305844922895340","l18":"داوه","l30":"داروسازی آوه سینا"},{"id":"5866848234665627","l18":"دسبحان","l30":"سبحان دارو"},{"id":"6328167131743522","l18":"اتوآگاه","l30":"صندوق س صنایع آگاه2-بخشی"},{"id":"42470251469508137","l18":"غناب","l30":"روغن‌ نباتی‌ ناب"},{"id":"44625249840480397","l18":"حآسا","l30":"آسیا سیر ارس"},{"id":"47492157735162813","l18":"آتیه ملت","l30":"صندوق س آتیه ملت-ثابت"},{"id":"57600064931636077","l18":"وجامی","l30":"سرمایه گذاری جامی"},{"id":"68909035712962732","l18":"ثباغ","l30":"شهر سازی و خانه سازی باغمیشه"},{"id":"70219663893822560","l18":"بکاب","l30":"صنایع‌جوشکاب‌یزد"},{"id":"35158826900216508","l18":"غاذر","l30":"کشت‌وصنعت‌پیاذر"},{"id":"32821908911812078","l18":"خزر","l30":"فنرسازی‌زر"},{"id":"23837844039713715","l18":"کفرا","l30":"فراورده‌ های‌ نسوزایران"},{"id":"59266699437480384","l18":"ارفع","l30":"شرکت آهن و فولاد ارفع"},{"id":"27276541005386425","l18":"فنر","l30":"پارس فنر"},{"id":"32845891587040106","l18":"ثنوسا","l30":"نوسازی‌وساختمان‌تهران"},{"id":"37204371816016200","l18":"وصندوق","l30":"سرمایه‌گذاری‌صندوق‌بازنشستگی"},{"id":"46878429508891351","l18":"نخریس","l30":"نخریسی و نساجی خسروی خراسان"},{"id":"71290297158948749","l18":"زقیام","l30":"کشت و دام قیام اصفهان"},{"id":"33541897671561960","l18":"واتی","l30":"سرمایه‌ گذاری‌ آتیه‌ دماوند"},{"id":"35178706978554988","l18":"شپاس","l30":"نفت پاسارگاد"},{"id":"50002340308486819","l18":"تاپکیش","l30":"تجارت الکترونیک پارسیان کیش"},{"id":"63830424809501048","l18":"اپرداز","l30":"آتیه داده پرداز"},{"id":"71523986304961239","l18":"قشیر","l30":"قند شیروان قوچان و بجنورد"},{"id":"45728383369147894","l18":"امین یکم","l30":"صندوق درآمد ثابت امین یکم فردا"},{"id":"69817338460284329","l18":"فروژ","l30":"صنایع فروآلیاژ ایران"},{"id":"25020657188512139","l18":"مرقام","l30":"ایران ارقام"},{"id":"52497713622747990","l18":"آلیاژ","l30":"صندوق س صنایع آگاه3-بخشی"},{"id":"64341992373049080","l18":"سدبیر","l30":"س. تدبیرگران فارس وخوزستان"},{"id":"31791737198597563","l18":"غشان","l30":"شیرپاستوریزه‌پگاه‌خراسان"},{"id":"34032872653290886","l18":"غپاک","l30":"لبنیات‌ پاک"},{"id":"23353689102956991","l18":"دکوثر","l30":"داروسازی‌ کوثر"},{"id":"45518744711972166","l18":"غپآذر","l30":"شیر پگاه آذربایجان شرقی"},{"id":"59486059679335017","l18":"وپترو","l30":"سرمایه‌گذاری صنایع پتروشیمی"},{"id":"34890845654517313","l18":"ساربیل","l30":"سیمان آرتا اردبیل"},{"id":"64358061873294912","l18":"چفیبر","l30":"تولید فیبر ایران"},{"id":"408934423224097","l18":"فرآور","l30":"فرآوری‌موادمعدنی‌ایران"},{"id":"12965822877128721","l18":"ثقزوی","l30":"شرکت عمران و سازندگی قزوین"},{"id":"31024260997481994","l18":"غگرجی","l30":"بیسکویت‌ گرجی"},{"id":"53113471126689455","l18":"چکارن","l30":"کارتن‌ ایران"},{"id":"6847536925606808","l18":"ومعلم","l30":"بیمه معلم"},{"id":"56717416662584054","l18":"وکادو","l30":"تکادو"},{"id":"64659064562132185","l18":"شمیم","l30":"صندوق س.درآمدثابت شمیم تابان-د"},{"id":"66036975502302203","l18":"فیروزه","l30":"صندوق شاخص30 شرکت فیروزه- سهام"},{"id":"3542690854557886","l18":"کیا","l30":"کیا الکترود شرق"},{"id":"5516102131364383","l18":"غمینو","l30":"شرکت صنایع غذایی مینو شرق"},{"id":"63790256437173246","l18":"ستران4","l30":"سیمان‌ تهران"},{"id":"4341085373810698","l18":"بزندگی","l30":"بیمه زندگی آگاه"},{"id":"28280189352163772","l18":"پیشران","l30":"صندوق س پیشران پارسیان-اهرمی"},{"id":"57722642338781674","l18":"پلاسک","l30":"پلاسکوکار"},{"id":"66682662312253625","l18":"آساس","l30":"صندوق س.آسمان آرمانی سهام-س"},{"id":"14825677919842501","l18":"تکیمیا","l30":"تامین سرمایه کیمیا"},{"id":"58180284328186631","l18":"خفناور","l30":"مهندسی صنعتی روان فن آور"},{"id":"50264175787486822","l18":"ترنج ثابت","l30":"ص.س.درآمد ثابت ترنج سودمند-د"},{"id":"19471788163911687","l18":"کفپارس","l30":"فرآورده‌های‌ نسوز پارس"},{"id":"4267564158935326","l18":"قیستو","l30":"شرکت قند بیستون"},{"id":"16410724132711490","l18":"غفارس","l30":"شیر پاستوریزه پگاه فارس"},{"id":"55289848471625247","l18":"پرسپولیس","l30":"پرسپولیس"},{"id":"917857106093847","l18":"حپارسا","l30":"توسعه حمل و نقل ریلی پارسیان"},{"id":"32525655729432562","l18":"سبهان","l30":"سیمان‌ بهبهان"},{"id":"33854964748757477","l18":"رنیک","l30":"جنرال مکانیک"},{"id":"64155926828410021","l18":"ساذری","l30":"آذریت"},{"id":"4384288570322406","l18":"دلر","l30":"داروسازی‌ اکسیر"},{"id":"13281937213456378","l18":"حسیر","l30":"ریل سیر کوثر"},{"id":"56574323121551263","l18":"شکبیر","l30":"پتروشیمی امیرکبیر"},{"id":"19298748452450329","l18":"تایرا","l30":"تراکتورسازی‌ایران"},{"id":"33603212156438463","l18":"دشیمی","l30":"شیمی‌ داروئی‌ داروپخش"},{"id":"33931218652865616","l18":"ونفت","l30":"سرمایه‌گذاری‌ صنعت‌ نفت"},{"id":"52551569846042389","l18":"بمان","l30":"صندوق س.بازده مانا-د"},{"id":"6478064539164167","l18":"ریشمک","l30":"تولید و صادرات ریشمک"},{"id":"59470107928175959","l18":"گنگین","l30":"گروه اقتصادی مالی نگین"},{"id":"24254843881948059","l18":"چکاوه","l30":"صنایع‌کاغذسازی‌کاوه"},{"id":"56375665074210467","l18":"فسوژ","l30":"سوژمیران"},{"id":"3173544097113770","l18":"شستان","l30":"پتروشیمی شهید رئیسی گلستان"},{"id":"5317427172344706","l18":"هجرت","l30":"پخش هجرت"},{"id":"46178280540110577","l18":"بفجر","l30":"فجر انرژی خلیج فارس"},{"id":"53334304751609770","l18":"حگردش","l30":"ریل گردش ایرانیان"},{"id":"65671173927025645","l18":"کتوکا","l30":"تولیدی و خدمات صنایع نسوز توکا"},{"id":"7505990056227818","l18":"ممسنی","l30":"پتروشیمی ممسنی"},{"id":"62258804563636993","l18":"تکشا","l30":"گسترش‌صنایع‌وخدمات‌کشاورزی"},{"id":"18303237082155264","l18":"دفرا","l30":"فرآورده‌های‌ تزریقی‌ ایران"},{"id":"56344907495802692","l18":"فاخر","l30":"صندوق س.ثروت افزون فاخر-د"},{"id":"831325835570803","l18":"ثنام","l30":"س ساختمانی ب نام آوران مهندسی"},{"id":"14957056743925737","l18":"خلنت","l30":"لنت‌ ترمزایران"},{"id":"24079409192818584","l18":"پدرخش","l30":"درخشان‌ تهران"},{"id":"20926459161497908","l18":"ثتران","l30":"سرمایه گذاری مسکن تهران"},{"id":"63704201144621295","l18":"حبندر","l30":"دریایی و کشتیرانی خط دریابندر"},{"id":"55376739611383226","l18":"خوشه","l30":"ص.س.صندوق در صندوق خوشه گندم"},{"id":"68117765376081366","l18":"وتوس","l30":"توسعه‌شهری‌توس‌گستر"},{"id":"30650426998863332","l18":"لبوتان","l30":"گروه‌صنعتی‌بوتان"},{"id":"14231831499205396","l18":"سنیر","l30":"سیمان‌ سفید نی‌ریز"},{"id":"24662567615903665","l18":"وسنا","l30":"سرمایه گذاری نیروگاهی ایران"},{"id":"42670427020727409","l18":"کاج","l30":"صندوق س. نوع دوم نو ویرا -د"},{"id":"46801030346547943","l18":"دقاضی","l30":"داروسازی شهید قاضی"},{"id":"64298008532791199","l18":"ساینا","l30":"صنایع بهداشتی ساینا"},{"id":"4247709727327181","l18":"مفاخر","l30":"توسعه فناوری اطلاعات خوارزمی"},{"id":"21344706880301255","l18":"چدن4","l30":"تولیدی چدن سازان"},{"id":"29122854902865456","l18":"کسعدی","l30":"کاشی‌ سعدی"},{"id":"40422084765096890","l18":"فارما کیان","l30":"صندوق س. بخشی کیان-ب"},{"id":"45608932669358493","l18":"کایتا","l30":"ایتالران"},{"id":"7183333492448248","l18":"وپخش","l30":"داروپخش‌ (هلدینگ"},{"id":"30507739597192201","l18":"تخت گاز","l30":"صندوق س.بخشی صنایع معیار-ب"},{"id":"63363116407864462","l18":"لابسا","l30":"آبسال"},{"id":"9761381741308262","l18":"وشمال","l30":"س. چشم انداز توسعه شمال"},{"id":"56591881518499520","l18":"وسین","l30":"بیمه سینا"},{"id":"58462435595049907","l18":"فنفت","l30":"صنایع تجهیزات نفت"},{"id":"69067576215760005","l18":"کاریس","l30":"صندوق س.سپند کاریزما-س"},{"id":"8021561335311415","l18":"اصیل","l30":"صندوق درآمدثابت مشترک البرز-د"},{"id":"40473515538481093","l18":"سمان","l30":"صندوق س ثروت پویا-بخشی"},{"id":"12901875871456398","l18":"ولراز","l30":"لیزینگ رازی"},{"id":"26393127587277568","l18":"آسا","l30":"صندوق س آرمان کارآفرین-ثابت"},{"id":"30719054967088301","l18":"تکمبا","l30":"کمباین‌ سازی‌ ایران"},{"id":"61265100181977543","l18":"مانی","l30":"صندوق س. با درآمد ثابت مانی"},{"id":"22259718159702272","l18":"استقلال","l30":"استقلال"},{"id":"67170215467608124","l18":"زنگان","l30":"صنعت روی زنگان"},{"id":"11432067920374603","l18":"دسینا","l30":"داروسازی‌ سینا"},{"id":"65640021232361587","l18":"آسان","l30":"صندوق س.مشترک گنجینه مهر-د"},{"id":"13611044044646901","l18":"ملت","l30":"بیمه ملت"},{"id":"14632692701434729","l18":"ونیرو4","l30":"سرمایه‌گذاری‌نیرو"},{"id":"48457557221009333","l18":"وتوسکا","l30":"سرمایه گذاری توسعه توکا"},{"id":"53254637903825194","l18":"کیان2","l30":"صندوق س. با درآمد ثابت کیان"},{"id":"53647874954005806","l18":"واحصا","l30":"احیاء صنایع خراسان"},{"id":"55959112038778737","l18":"سخواف","l30":"سیمان مجد خواف"},{"id":"60451823714332895","l18":"دالبر","l30":"البرزدارو"},{"id":"30507152381699953","l18":"ثجوان","l30":"تامین مسکن جوانان"},{"id":"47377315952751604","l18":"بسویچ","l30":"پارس‌سویچ"},{"id":"61318276340211749","l18":"فولاد4","l30":"فولاد مبارکه اصفهان"},{"id":"4758266259250794","l18":"خپویش","l30":"سازه‌ پویش"},{"id":"14312030900097668","l18":"غگلپا","l30":"شیر پاستوریزه پگاه گلپایگان"},{"id":"18346219759153870","l18":"شصفها","l30":"پتروشیمی‌ اصفهان"},{"id":"50580753680043015","l18":"معیار","l30":"سرمایه گذاری معیار صنعت پارس"},{"id":"52792903131341205","l18":"افرا","l30":"افرانت"},{"id":"54493234408301135","l18":"بنو","l30":"بیمه تجارت نو"},{"id":"63380098535169030","l18":"قنیشا","l30":"قند نیشابور"},{"id":"6116572045021585","l18":"شجم","l30":"صنایع پتروشیمی تخت جمشید"},{"id":"31366347648583654","l18":"ارمغان","l30":"ص سرمایه گذاری ارمغان ایرانیان"},{"id":"58722731270352481","l18":"پایش","l30":"ص.س. درآمد ثابت پایش-د"},{"id":"71965526204689284","l18":"سرود4","l30":"سیمان‌شاهرود"},{"id":"4373573287489723","l18":"وامین","l30":"سرمایه گذاری امین مهرگان"},{"id":"49627523909849331","l18":"کفرآور","l30":"فرآورده های سیمان شرق"},{"id":"60079434631497942","l18":"ورازی","l30":"بیمه رازی"},{"id":"61664227282090067","l18":"سلار","l30":"شرکت سیمان لارستان"},{"id":"59461185672081215","l18":"غمایه","l30":"شرکت خمیرمایه رضوی"},{"id":"60289595205403229","l18":"بهیر","l30":"س. توسعه تجارت هیرمند"},{"id":"63084741752814852","l18":"دشیری","l30":"شیرین دارو"},{"id":"47841327496247362","l18":"واعتبار","l30":"سرمایه گذاری اعتبار ایران"},{"id":"3050342257199174","l18":"قنقش","l30":"قند نقش جهان"},{"id":"27000326841257664","l18":"سدشت","l30":"صنایع سیمان دشتستان"},{"id":"65999092673039059","l18":"مداران","l30":"داده‌پردازی‌ایران"},{"id":"45991797190214892","l18":"وآفر","l30":"سرمایه گذاری ارزش آفرینان"},{"id":"18757639286384873","l18":"پتروآبان","l30":"صندوق س. بخشی پتروآبان-ب"},{"id":"22941065011246116","l18":"کپرور","l30":"فرآوری زغال سنگ پروده طبس"},{"id":"33015297618582406","l18":"کارما","l30":"صندوق س.درآمد ثابت کیهان-د"},{"id":"35445515321658835","l18":"فماک","l30":"ماداکتو استیل کرد"},{"id":"66021783818850713","l18":"فافزا","l30":"فولاد افزا سپاهان"},{"id":"69090868458637360","l18":"دیران","l30":"ایران‌دارو"},{"id":"36995197800118822","l18":"سنوین","l30":"سرمایه گذاری اقتصاد نوین"},{"id":"56429431740318486","l18":"شلرد","l30":"کود شیمیایی اوره لردگان"},{"id":"60633055620418060","l18":"فلات","l30":"گروه صنایع معادن فلات ایرانیان"},{"id":"26025177574491991","l18":"شلیا","l30":"شرکت مواد ویژه لیا"},{"id":"64699417405634265","l18":"نطرین","l30":"عطرین نخ قم"},{"id":"71744682148776880","l18":"ولصنم","l30":"لیزینگ‌صنعت‌ومعدن"},{"id":"17059960254855208","l18":"غبهنوش","l30":"بهنوش‌ ایران"},{"id":"19828734979381742","l18":"آلا","l30":"صندوق س.اعتماد ارغوان-د"},{"id":"35874618740232030","l18":"شجمح","l30":"ح . صنایع پتروشیمی تخت جمشید"},{"id":"56712769076499345","l18":"هدف","l30":"ص.س.دثابت مشترک صبای هدف-د"},{"id":"61792732570093263","l18":"بهامرز","l30":"بیمه زندگی هامرز"},{"id":"50587892784913370","l18":"حشکوه","l30":"دلیجان طلایی شکوه پارس"},{"id":"71957984642204570","l18":"شپترو","l30":"پتروشیمی آبادان"},{"id":"28230238564334914","l18":"قجام","l30":"فرآوردههای غذایی وقندتربت‌جام"},{"id":"29316948750916349","l18":"پلوله","l30":"گازلوله"},{"id":"12840158707161274","l18":"فلزا","l30":"صندوق س.بخشی صنایع پاداش2-ب"},{"id":"41227201752535311","l18":"سفار","l30":"سیمان‌فارس"},{"id":"57761388729898548","l18":"اوصتا","l30":"صندوق اندیشه ورزان صباتامین -د"},{"id":"67394181399291454","l18":"تاتمسح","l30":"ح.کارخانجات صنعتی وتولیداتمسفر"},{"id":"12303918642491681","l18":"زنجان","l30":"صنایع کشاورزی وکود زنجان"},{"id":"25001509088465005","l18":"کساوه","l30":"صنایع‌ کاشی‌ و سرامیک‌ سینا"},{"id":"66450490505950110","l18":"ددام","l30":"داروسازی زاگرس فارمد پارس"},{"id":"5920901446678689","l18":"وتعاون","l30":"بیمه تعاون"},{"id":"61138760304116849","l18":"کالا4","l30":"بورس کالای ایران"},{"id":"44850033148208596","l18":"غچین","l30":"کشت‌ و صنعت‌ چین‌ چین"},{"id":"49681831162536304","l18":"همگام","l30":"صندوق س. درآمد ثابت همگام-د"},{"id":"62012736978844991","l18":"دارا","l30":"صندوق س. دارا الگوریتم-د"},{"id":"70814244102598215","l18":"امین شهر","l30":"ص.س. املاک و مستغلات امین شهر"},{"id":"1358190916156744","l18":"وآذر","l30":"سرمایه‌گذاری‌توسعه‌آذربایجان"},{"id":"43374709930371268","l18":"دحاوی","l30":"الحاوی"},{"id":"21426277483799140","l18":"غنیلی","l30":"مجتمع تولیدی نیلی صنعت کرمان"},{"id":"50341528161302545","l18":"کمنگنز","l30":"معادن‌منگنزایران"},{"id":"66599109405217136","l18":"گکوثر","l30":"هتل پارسیان کوثر اصفهان"},{"id":"50368344235826302","l18":"لازما","l30":"کارخانه های صنعتی آزمایش"},{"id":"67030488744129337","l18":"قپیرا","l30":"فرآورده‌های‌غدایی‌وقندپیرانشهر"},{"id":"17933573078185644","l18":"آینده","l30":"بازرگانی آینده سازان بهشت پارس"},{"id":"38713440086361985","l18":"ثهام","l30":"صندوق س ثروت هامرز-سهام"},{"id":"39481233087768672","l18":"نیرو","l30":"نیرو سرمایه"},{"id":"60887982279284651","l18":"ثجنوب","l30":"سرمایه گذاری مسکن جنوب"},{"id":"61332057061846617","l18":"دابور","l30":"داروسازی‌ ابوریحان"},{"id":"589599697502308","l18":"وآفری","l30":"بیمه کارآفرین"},{"id":"8961366473557410","l18":"رسانا","l30":"صندوق س.بخشی گستره فیروزه1-ب"},{"id":"16567465928886309","l18":"درازی","l30":"پخش رازی"},{"id":"25215182208950217","l18":"وهور","l30":"گروه س.انرژی امید تابان هور"},{"id":"48932793456289874","l18":"هیبرید","l30":"صندوق س آسمان خاورمیانه-مختلط"},{"id":"56802926348928053","l18":"ولیز","l30":"لیزینگ ایران"},{"id":"67213778593531096","l18":"وامیر","l30":"گروه صنعتی و معدنی امیر"},{"id":"24212636157410845","l18":"وآرین","l30":"شرکت توسعه اقتصادی آرین"},{"id":"41625340598198551","l18":"بساما","l30":"بیمه سامان"},{"id":"43291783149314349","l18":"وسرمد","l30":"بیمه سرمد"},{"id":"22308305646551497","l18":"تپولا","l30":"مهندسی مرآت پولاد"},{"id":"59839275647597021","l18":"وثوق","l30":"سرمایه گذاری وثوق امین"},{"id":"55254206302462116","l18":"آپ","l30":"آسان پرداخت پرشین"},{"id":"17232252152159494","l18":"آواپارس","l30":"بیمه اتکایی آوای پارس"},{"id":"4170494561477386","l18":"رشدی کیان","l30":"صندوق س آوای سهام کیان-سهام"},{"id":"36273975537785965","l18":"سرو2","l30":"صندوق س سروسودمند مدبران-سهام"},{"id":"46483466867025192","l18":"بکهنوج","l30":"تولید برق ماهتاب کهنوج"},{"id":"5128151910501174","l18":"وحافظ","l30":"بیمه حافظ"},{"id":"12777578088653944","l18":"وحکمت","l30":"بیمه حکمت صبا"},{"id":"14617104402836487","l18":"سیلام","l30":"سیمان‌ ایلام"},{"id":"34721884030854211","l18":"سفاسی","l30":"شرکت فارسیت اهواز"},{"id":"41286608288791633","l18":"وبازار","l30":"صندوق س شاخصی بازارآشنا"},{"id":"44013656953678055","l18":"شرانل","l30":"نفت ایرانول"},{"id":"44558786393585356","l18":"ثابت اکسیژن","l30":"ص.س.درآمد ثابت اکسیژن-د"},{"id":"62346804681275278","l18":"کگاز","l30":"شیشه‌ و گاز"},{"id":"490987973229371","l18":"آکام","l30":"صندوق س. نوع دوم آکام-د"},{"id":"32357363984168442","l18":"جم","l30":"پتروشیمی جم"},{"id":"60783654574662426","l18":"وهنر","l30":"گروه توسعه هنر ایران"},{"id":"65018804181564924","l18":"گوهران","l30":"سرمایه گذاری توسعه گوهران امید"},{"id":"68644622102682218","l18":"اتکاسا","l30":"بیمه اتکایی سامان"},{"id":"71666521540545716","l18":"غبهار","l30":"کشت وصنعت بهاران گلبهار خراسان"},{"id":"3149396562827132","l18":"وایران","l30":"لیزینگ ایرانیان"},{"id":"11773403764702778","l18":"وبیمه","l30":"سرمایه‌ گذاری‌ صنعت‌ بیمه"},{"id":"25180702353416009","l18":"زدشت","l30":"کشت و صنعت دشت خرم دره"},{"id":"2161110547458064","l18":"سپیدما","l30":"صندوق س. سپید دماوند-د"},{"id":"22424135367941584","l18":"فافق","l30":"صنایع مس افق کرمان"},{"id":"51459202425114449","l18":"تابا","l30":"تابان نیرو سپاهان"},{"id":"57157873359416943","l18":"شرنگی","l30":"شیمیایی رنگین"},{"id":"22490169030401337","l18":"وآوا","l30":"سرمایه گذاری آوا نوین"},{"id":"37118058361762279","l18":"مالک آتیه","l30":"ص.س.املاک و مستغلات مالک آتیه"},{"id":"44846320603450383","l18":"فروسیل","l30":"فروسیلیسیم خمین"},{"id":"53419976284977130","l18":"تصمیم","l30":"صندوق س با درآمد ثابت تصمیم"},{"id":"66514709341259550","l18":"فوکا","l30":"فولاد کاویان"},{"id":"3850010712030436","l18":"ساروم4","l30":"سیمان‌ارومیه"},{"id":"65490886290565185","l18":"شزنگ","l30":"تجهیزنیروی‌زنگان"},{"id":"20789606562681728","l18":"مزه","l30":"صندوق س صنایع دایا3-بخشی"},{"id":"38797707206471622","l18":"شفارس4","l30":"صنایع‌ شیمیایی‌ فارس"},{"id":"47125023640770480","l18":"صنم","l30":"ص.س.صندوق در صندوق صنم"},{"id":"54263829393913132","l18":"کمینا","l30":"شیشه سازی مینا"},{"id":"25286509736208688","l18":"فلامی","l30":"لامیران"},{"id":"37631109616997982","l18":"قشهد","l30":"شهد"},{"id":"69904617508102874","l18":"کارام","l30":"صنایع سرام آرا"},{"id":"14258394084745667","l18":"سمتاز","l30":"سیمان ممتازان کرمان"},{"id":"15962072736526551","l18":"کاریز","l30":"بیمه زندگی کاریزما"},{"id":"42696242981550091","l18":"کصدف","l30":"کاشی صدف سرام استقلال آباده"},{"id":"50503654866742146","l18":"هامرز","l30":"صندوق س اعتماد هامرز-ثابت"},{"id":"35543935713999309","l18":"تاتمس","l30":"کارخانجات صنعتی وتولیدی اتمسفر"},{"id":"43443105991896600","l18":"ارزش","l30":"صندوق س ارزش آفرین بیدار-سهام"},{"id":"47101579271117172","l18":"گنجینه","l30":"صندوق س. گنجینه داریوش-د"},{"id":"66424163876658304","l18":"ودانا","l30":"سرمایه گذاری دانایان"},{"id":"42690477960659940","l18":"کشرق","l30":"صنعتی و معدنی شمال شرق شاهرود"},{"id":"43023243844297350","l18":"چنوپا","l30":"نیوپان‌ 22 بهمن"},{"id":"70541934393301867","l18":"سلام","l30":"صندوق س سلام فارابی-سهام"},{"id":"29860265627578401","l18":"ما","l30":"بیمه ما"},{"id":"29882244560576007","l18":"بزاگرس","l30":"نیروگاه زاگرس کوثر"},{"id":"69472361926040823","l18":"ویسا","l30":"سرمایه گذاری ایساتیس پویا"},{"id":"27639047710974505","l18":"خبرگان","l30":"صندوق س اندیشه خبرگان-سهام"},{"id":"30215634246748564","l18":"انار","l30":"صندوق س.انارنماد ارزش-درسهام"},{"id":"31400839654504249","l18":"تفارس","l30":"تامین سرمایه خلیج فارس"},{"id":"49854144784855542","l18":"رتکو","l30":"کنترل ‌خوردگی ‌تکین ‌کوی"},{"id":"4769396408895066","l18":"بلوط","l30":"صندوق س شکوه بامداد زاگرس-ثابت"},{"id":"16369313804633525","l18":"حپترو","l30":"حمل و نقل پتروشیمی( سهامی عام"},{"id":"42799209630949274","l18":"بهین رو","l30":"صندوق س صنایع ویستا1-بخشی"},{"id":"47563321799863211","l18":"بتهران","l30":"بیمه اتکایی تهران رواک"},{"id":"8704805036632936","l18":"کچاد4","l30":"معدنی‌وصنعتی‌چادرملو"},{"id":"15282093177363578","l18":"شساخت","l30":"مهندسی و ساختمان صنایع نفت"},{"id":"33899673298288340","l18":"ناماح","l30":"ح.تولیدی مخازن گازطبیعی آسیانا"},{"id":"46918165794045813","l18":"سیمانا","l30":"صندوق س صنایع دایا2-بخشی"},{"id":"15930821245168534","l18":"سکارون","l30":"سیمان کارون"},{"id":"22427604495160869","l18":"تمحرکه","l30":"ماشین سازی نیرو محرکه"},{"id":"27148572013604038","l18":"وفتخار","l30":"سرمایه گذاری افتخار سهام"},{"id":"63507121552152989","l18":"بانکدار","l30":"صندوق س صنایع اعتبار1-بخشی"},{"id":"2254054929817435","l18":"غدام","l30":"خوراک‌ دام‌ پارس"},{"id":"30231789123900526","l18":"نمرینو","l30":"ایران‌ مرینوس"},{"id":"34856765062083074","l18":"بازده","l30":"صندوق س. بازده ثابت-د"},{"id":"37270969295842910","l18":"فخوز4","l30":"فولاد خوزستان"},{"id":"43966385447049549","l18":"ودی","l30":"بیمه دی"},{"id":"70515583859928047","l18":"متال","l30":"صندوق س صنایع دایا1-بخشی"},{"id":"10654052153538617","l18":"کابگن","l30":"تولیدی و صنعتی آبگینه"},{"id":"27797446447955609","l18":"نخل","l30":"صندوق س.خلیج فارس-د"},{"id":"42049553761321495","l18":"کورز","l30":"ورزیران"},{"id":"11285885633824855","l18":"دریا","l30":"صندوق س دریای آبی فیروزه-سهام"},{"id":"11403770140000603","l18":"ولملت","l30":"واسپاری ملت"},{"id":"11560002870991149","l18":"وپسا","l30":"گ.س.پتروشیمی ساختمان خلیج فارس"},{"id":"43664630566988630","l18":"فلزفارابی","l30":"صندوق س.بخشی فلز فارابی-ب"},{"id":"48050547331908531","l18":"پکویر4","l30":"کویر تایر"},{"id":"53686258677793038","l18":"وارس","l30":"سرمایه گذاری ارس صبا"},{"id":"26212189511019746","l18":"سآبیک4","l30":"سیمان آبیک"},{"id":"44296315953738727","l18":"فاهواز","l30":"نورد و لوله اهواز"},{"id":"971068957336171","l18":"گارانتی","l30":"صندوق تضمین ا.س. گیتی دماوند-م"},{"id":"16582961426722208","l18":"آسود","l30":"ص.س.درآمد ثابت آرمان اقتصاد-د"},{"id":"18377845653697190","l18":"کوانتوم","l30":"صندوق س. کوانتوم بهاوند-س"},{"id":"10712607014123911","l18":"پتروپاداش","l30":"صندوق س.بخشی صنایع پاداش1-ب"},{"id":"31913287805282551","l18":"سیناد","l30":"صندوق س.سپهرسودمند سینا-د"},{"id":"2019449432639594","l18":"پتروداریوش","l30":"صندوق س. بخشی داریوش1-ب"},{"id":"71779402170497603","l18":"اتوداریوش","l30":"صندوق س. بخشی داریوش2-ب"},{"id":"22950683624908253","l18":"نتوس","l30":"پشم‌ بافی‌ توس"},{"id":"31959715133485440","l18":"ولقمان","l30":"گروه سرمایه گذاری لقمان"},{"id":"33410001534682920","l18":"رفاه","l30":"فروشگاه های زنجیره ای رفاه"},{"id":"51920757918600374","l18":"هم تراز","l30":"صندوق س شاخصی هم وزن تراز-سهام"},{"id":"55979741213594029","l18":"کباده","l30":"تولید خاک نسوزاستقلال آباده"},{"id":"65576885779918210","l18":"مدیر","l30":"ص.س.مدیریت ثروت ص.بازنشستگی-س"},{"id":"43358402418932595","l18":"آذرین","l30":"صندوق س.بخشی فلزات کیمیا-ب"},{"id":"49138405997428769","l18":"کگل4","l30":"معدنی و صنعتی گل گهر"},{"id":"49674915481184052","l18":"جهرم","l30":"پتروشیمی جهرم"},{"id":"5412404451936901","l18":"فسبزوار4","l30":"پارس فولاد سبزوار"},{"id":"40262275031537922","l18":"دروز","l30":"داروسازی‌ روزدارو"},{"id":"65023851436340574","l18":"کاردان","l30":"صندوق س تجارت شاخصی کاردان"},{"id":"4885314541377431","l18":"حپرتو","l30":"پرتو بار فرابر خلیج فارس"},{"id":"15374483986949695","l18":"دهدشت","l30":"صنایع پتروشیمی دهدشت"},{"id":"23891830829322971","l18":"بایکا","l30":"کارخانجات کابلسازی ‌ایران"},{"id":"36592972482259020","l18":"آسام","l30":"صندوق س.آرمان سپهر آتی-م"},{"id":"65473703162196532","l18":"ابتکار","l30":"صندوق س.پرتوابتکارهدف-س"},{"id":"71051000490303906","l18":"پولاد","l30":"صندوق س.بخشی صنایع آبان2-ب"},{"id":"36773155987365094","l18":"اعتلا","l30":"شرکت سرمایه گذاری اعتلاء البرز"},{"id":"13666407494621646","l18":"فراز","l30":"صندوق س.سهام فراز داریک-س"},{"id":"16777570760181431","l18":"کازرو","l30":"پتروشیمی کازرون"},{"id":"66127247173352975","l18":"تشتاد","l30":"صنایع تولیدی اشتاد ایران"},{"id":"1825060609227181","l18":"تکپاد","l30":"صندوق س. مشترک آریان-س"},{"id":"34581754264880199","l18":"درسا","l30":"صندوق سرمایه گذاری درسا - سهام"},{"id":"48240748007949910","l18":"کارآمد2","l30":"صندوق س.درآمد ثابت کارآمد-د"},{"id":"50243708970398750","l18":"اطمینان","l30":"ص.س.درآمد ثابت اطمینان هیوا-د"},{"id":"53363812948280634","l18":"شمیم2","l30":"صندوق س.درآمدثابت شمیم تابان-د"},{"id":"53517183536432668","l18":"کرماشا4","l30":"صنایع پتروشیمی کرمانشاه"},{"id":"66456062140680461","l18":"ثامان","l30":"سامان‌ گستراصفهان"},{"id":"72044846109864381","l18":"پارتا","l30":"مجتمع صنعتی آرتاویل تایر"},{"id":"7376158544119907","l18":"لذیذ","l30":"صندوق س صنایع سینا1-بخشی"},{"id":"18007109712724189","l18":"آوا","l30":"صندوق س.سهام آوای معیار-س"},{"id":"24634634008171593","l18":"جواهر2","l30":"صندوق س.پشتوانه طلا دنای زاگرس"},{"id":"31188566503248753","l18":"نیلی","l30":"صندوق س. نوع دوم نیلی دماوند-د"},{"id":"50139638026536387","l18":"زرین","l30":"صندوق س. سهام زرین کوروش-س"},{"id":"66830065858417081","l18":"ولانا","l30":"شرکت لیزینگ آریا دانا"},{"id":"29347317240251227","l18":"کرازی4","l30":"کارخانجات‌تولیدی‌شیشه‌رازی"},{"id":"31389079379596565","l18":"فرا الگوریتم","l30":"صندوق س.بخشی فرا الگوریتم1-ب"},{"id":"37680244836461090","l18":"ساحل2","l30":"ص.ساحل سرمایه امن خلیج فارس-د"},{"id":"47797676603278665","l18":"بازرگام","l30":"پست پیشگامان"},{"id":"66219723709595228","l18":"سیمانیا","l30":"صندوق س.بخشی صنایع داریا-ب"},{"id":"70698996132397388","l18":"دیبا","l30":"صندوق س اوراق دولتی صبا-ثابت"},{"id":"28854105556435129","l18":"ثزاگرس","l30":"سرمایه گذاری توسعه عمران زاگرس"},{"id":"43913530989262989","l18":"سمایه","l30":"بانک سرمایه"},{"id":"59345957997866018","l18":"نمک","l30":"صندوق س.بخشی گستره فیروزه3 -ب"},{"id":"59598536122397373","l18":"سخند","l30":"صندوق س.سپهرخبرگان نفت-د"},{"id":"65190029034514887","l18":"خزانه ملت","l30":"صندوق س.مختص اوراق دولتی ملت-د"},{"id":"71108387303091880","l18":"پرتوسا","l30":"صندوق س.سهامی پرتو آمال-س"},{"id":"24744049494761785","l18":"رونق","l30":"صندوق س.رونق کسرا-سهام"},{"id":"31379272181300633","l18":"سپنتارود","l30":"ص.س.د.ثابت ماه آفرید سپینود-د"},{"id":"63294281454014835","l18":"فباهنر4","l30":"مس‌ شهیدباهنر"},{"id":"66721204145017523","l18":"ثمین","l30":"صندوق س. ثروت افزون ثمین-س"},{"id":"26882843763780650","l18":"باران","l30":"بیمه زندگی باران"},{"id":"47756003257788498","l18":"حگهر","l30":"حمل و نقل گهرترابر سیرجان"},{"id":"50117925085549635","l18":"خلیبل","l30":"مالیبل سایپا"},{"id":"56006915451245411","l18":"لخانه","l30":"لوازم‌ خانگی‌ پارس"},{"id":"318005355896147","l18":"فسا","l30":"پتروشیمی فسا"},{"id":"31230051169165044","l18":"طعام","l30":"صندوق س.بخشی بازده صنایع2-ب"},{"id":"68023797669572236","l18":"شپدیس4","l30":"پتروشیمی پردیس"},{"id":"605973375026000","l18":"پردیس4","l30":"سرمایه گذاری پردیس"},{"id":"10055255678920880","l18":"وملت","l30":"سرمایه گذاری ملت"},{"id":"12562901517184931","l18":"ومعادن4","l30":"توسعه‌معادن‌وفلزات"},{"id":"22235242588987118","l18":"کخاک4","l30":"صنایع‌خاک‌چینی‌ایران"},{"id":"25631699615003698","l18":"کهرام","l30":"تولیدی گرانیت بهسرام"},{"id":"26867809069275601","l18":"سهگمت4","l30":"سیمان‌هگمتان"},{"id":"36120638536280516","l18":"غزر4","l30":"صنعتی زر ماکارون"},{"id":"37920364612147195","l18":"هوشمند","l30":"صندوق س شاخصی شفق رابین"},{"id":"47058116362897297","l18":"وپاسار4","l30":"بانک پاسارگاد"},{"id":"64485827086284311","l18":"فجوش","l30":"جوش‌ و اکسیژن‌ ایران"},{"id":"71672399601682259","l18":"ثروتم","l30":"صندوق س. ثروت آفرین پارسیان-س"},{"id":"1201264064739975","l18":"خگستر4","l30":"گسترش‌سرمایه‌گذاری‌ایران‌خودرو"},{"id":"6887514235904547","l18":"قرن4","l30":"پدیده شیمی قرن"},{"id":"7303159018400817","l18":"پناه","l30":"صندوق س.بخشی شایسته فردا-ب"},{"id":"10535841469368706","l18":"آلکان","l30":"صندوق راهبرصنایع مهرگان1-بخشی"},{"id":"11768672302029025","l18":"سیب","l30":"ص.س جسورانه سیب30%تادیه"},{"id":"23049019886587905","l18":"خفولا","l30":"خدمات فنی فولاد یزد"},{"id":"28788598290160782","l18":"الماس","l30":"صندوق س.امین تدبیرگران فردا-س"},{"id":"30430907997908005","l18":"نارین","l30":"صندوق س ارزش آفرین فولاد-سهام"},{"id":"38356837895042988","l18":"ضمان","l30":"صندوق تضمین ا.سرمایه کاریزما-م"},{"id":"40141106680433538","l18":"بانکدار2","l30":"صندوق س صنایع اعتبار1-بخشی"},{"id":"44215112373339904","l18":"کهربا2","l30":"صندوق س.پشتوانه سکه طلا کهربا"},{"id":"66105959479616770","l18":"رایکا","l30":"صندوق س نوع دوم رایکا- ثابت"},{"id":"19310456400689867","l18":"خبازرس","l30":"بازرسی مهندسی و صنعتی ایران"},{"id":"40043919653526083","l18":"وثخوز","l30":"سرمایه گذاری و توسعه خوزستان"},{"id":"42119064477695497","l18":"سخزر4","l30":"سیمان‌ خزر"},{"id":"49399017998386087","l18":"فبیرا","l30":"بسته‌ بندی‌ ایران"},{"id":"58789178087946067","l18":"داریوش","l30":"صندوق س. ثروت داریوش -س"},{"id":"58858503904797599","l18":"شکربن4","l30":"کربن‌ ایران"},{"id":"68285083509815728","l18":"طلا2","l30":"صندوق س.پشتوانه طلای لوتوس"},{"id":"4686607974846832","l18":"سفارود","l30":"کارخانه فارسیت درود"},{"id":"10063040211859748","l18":"آس","l30":"صندوق س. گنجینه ارمغان الماس-س"},{"id":"13327012090180555","l18":"عرش","l30":"صندوق س.عرش میلاد شهر-س"},{"id":"30977409629493496","l18":"نیک گستر","l30":"صندوق س توسعه سرمایه نیکی-ثابت"},{"id":"40126421241992147","l18":"سورنافود","l30":"صندوق س.بخشی صنایع سورنا2-ب"},{"id":"70377620221709663","l18":"معینح","l30":"ح .بیمه ایران - معین"},{"id":"9606950897325114","l18":"وخارزم4","l30":"سرمایه گذاری خوارزمی"},{"id":"25939152102381174","l18":"سپاها4","l30":"سیمان‌سپاهان"},{"id":"33923981945674722","l18":"همتا","l30":"صندوق س مانا ثروت پویا-سهام"},{"id":"34322849244939912","l18":"کاشانه","l30":"ص.س املاک وم.کاشانه خلیج فارس"},{"id":"56798822689379375","l18":"حاریا","l30":"کشتیرانی آریا"},{"id":"118005828419984","l18":"چتر","l30":"صندوق س.بخشی گستره فیروزه2-ب"},{"id":"10831074117626896","l18":"قاروم","l30":"قند ارومیه"},{"id":"11540236653207133","l18":"اندوخته داریوش","l30":"ص.س.درآمدثابت اندوخته داریوش-د"},{"id":"15432794844050822","l18":"آلا2","l30":"صندوق س.اعتماد ارغوان-د"},{"id":"16417568146230314","l18":"نهال2","l30":"صندوق س. طلای سرخ نوویرا"},{"id":"35757908588761589","l18":"گوهر2","l30":"صندوق طلای کیان"},{"id":"44665761767777759","l18":"گکیش","l30":"توریستی ورفاهی آبادگران کیش"},{"id":"45452221088910484","l18":"عقیق","l30":"صندوق سرمایه گذاری عقیق-سهام"},{"id":"52072275543206224","l18":"رز ترنج2","l30":"صندوق س.پشتوانه طلای رز"},{"id":"53455460175800504","l18":"ثبهساز4","l30":"بهساز کاشانه تهران"},{"id":"63514093298304639","l18":"هامون","l30":"صندوق س. سهام ثروت هامون-س"},{"id":"68203878405672734","l18":"صنوین","l30":"صندوق سرمایه‌گذاری صنوین-مختلط"},{"id":"1050751214677134","l18":"شگامرن","l30":"مجتمع پترو صنعت گامرون"},{"id":"4159532151694984","l18":"فبستم","l30":"صنایع ‌بسته‌بندی‌ مشهد"},{"id":"4216536645718658","l18":"برلیان","l30":"صندوق سرمایه گذاری برلیان-سهام"},{"id":"17880257387458062","l18":"کامیاب2","l30":"صندوق س. کامیاب آشنا-د"},{"id":"23609214278467198","l18":"ثروت ساز","l30":"صندوق س ثروت ساز دیبا-سهام"},{"id":"27838086943364724","l18":"سخوز4","l30":"سیمان خوزستان"},{"id":"31787507070992420","l18":"فارمانی","l30":"صندوق س آرمان آتی- بخشی"},{"id":"34472339105893593","l18":"یلدا","l30":"صندوق س.مشترک سبحان-سهام"},{"id":"53059909885484371","l18":"رویین","l30":"صندوق س.بخشی صنایع سورنا1-ب"},{"id":"55728003210240673","l18":"سغرب4","l30":"سیمان‌غرب"},{"id":"57479363687216607","l18":"زرگر2","l30":"صندوق س.پشتوانه طلا زرگرکارآمد"},{"id":"62060655552718345","l18":"وبانک4","l30":"سرمایه گذاری گروه توسعه ملی"},{"id":"62869646049188469","l18":"ماکان","l30":"ص.س.درآمدثابت ثروت ماکان-د"},{"id":"64968461315419199","l18":"سپر4","l30":"صندوق س سپر سرمایه بیدار- ثابت"},{"id":"71266020070603888","l18":"سهامدار","l30":"صندوق س. بازده سهام-س"},{"id":"1615568553825001","l18":"غگل4","l30":"گلوکوزان"},{"id":"6669895329401799","l18":"پایش2","l30":"ص.س. درآمد ثابت پایش-د"},{"id":"8912965520056581","l18":"هومان","l30":"صندوق س. سهامی ثروت هومان-س"},{"id":"15564051253057810","l18":"وسینا4","l30":"بانک سینا"},{"id":"20119181940051841","l18":"رویش همراه","l30":"صندوق س رویش همراه سرمایه-سهام"},{"id":"30443839313522574","l18":"حرهشا","l30":"رهشاد سپاهان (سهامی عام"},{"id":"30689715558697375","l18":"ختوقا4","l30":"قطعات‌ اتومبیل‌ ایران"},{"id":"31248540252187559","l18":"مروارید","l30":"صندوق س. مروارید بها بازار-س"},{"id":"36306033782578813","l18":"فپنتا4","l30":"سپنتا"},{"id":"36416491029266571","l18":"زمرد2","l30":"صندوق س.پشتوانه طلا زمرد بیدار"},{"id":"37028614515926436","l18":"آفرین","l30":"صندوق س رشدآفرین سرمایه-مختلط"},{"id":"39710474979238367","l18":"سها","l30":"صندوق س مشترک مبین سرمایه-سهام"},{"id":"48911491147097064","l18":"دفارا4","l30":"داروسازی‌ فارابی"},{"id":"49531112577387255","l18":"جاودان","l30":"صندوق س جاویدان سهام مانی-سهام"},{"id":"50358563627438461","l18":"سپر2","l30":"صندوق س سپر سرمایه بیدار- ثابت"},{"id":"53252186200454799","l18":"همگام2","l30":"صندوق س. درآمد ثابت همگام-د"},{"id":"53682409688462828","l18":"اردستان4","l30":"سیمان اردستان"},{"id":"55201604487356053","l18":"فن آوا","l30":"گروه فن آوا"},{"id":"55761294311886451","l18":"اعتبارسهام","l30":"صندوق س.اعتبارسهام-سهام"},{"id":"58523173331267630","l18":"انرژی4","l30":"بورس انرژی ایران"},{"id":"58852293795036597","l18":"ویستا","l30":"صندوق س. ویستا -س"},{"id":"60625404831641665","l18":"خکار4","l30":"ایرکا پارت صنعت"},{"id":"67522512921942106","l18":"پادا","l30":"صندوق س.پاداش سرمایه پارس-س"},{"id":"2994651607428793","l18":"خبهمن4","l30":"گروه‌بهمن"},{"id":"6433335428452486","l18":"خعمرا","l30":"توسعه و عمران شهرستان نائین"},{"id":"10809373624603744","l18":"سحرخیز2","l30":"صندوق س. گروه زعفران سحرخیز"},{"id":"14595372266385614","l18":"غسالم4","l30":"سالمین"},{"id":"15555169777278617","l18":"بترانس4","l30":"ایران‌ ترانسفو"},{"id":"18623561935932625","l18":"کیان4","l30":"صندوق س. با درآمد ثابت کیان"},{"id":"22839330962768817","l18":"آتیمس","l30":"صندوق س.آرمان آتیه درخشان مس-س"},{"id":"23678782355312544","l18":"شتران2","l30":"پالایش نفت تهران"},{"id":"24198960406596014","l18":"پاداش2","l30":"صندوق س. ارزش پاداش-د"},{"id":"24651394045981418","l18":"تاراز","l30":"صندوق س آوای تاراز زاگرس-سهام"},{"id":"26212793770779783","l18":"گنگین2","l30":"گروه اقتصادی مالی نگین"},{"id":"29823003612377000","l18":"بمان2","l30":"صندوق س.بازده مانا-د"},{"id":"30762816122316539","l18":"پتروصبا","l30":"صندوق س صنایع اندیشه صبا1-بخشی"},{"id":"32941062994509455","l18":"مانا","l30":"صندوق س.مانا الگوریتم-سهام"},{"id":"36097802106344978","l18":"بانکا2","l30":"صندوق س صنایع آگاه4-بخشی"},{"id":"38737017363366362","l18":"هم تراز2","l30":"صندوق س شاخصی هم وزن تراز-سهام"},{"id":"40047937479962921","l18":"ارکیده2","l30":"صندوق سرمایه گذاری ارکیده-ثابت"},{"id":"40634996684163251","l18":"کسرا4","l30":"سرامیک‌های‌صنعتی‌اردکان"},{"id":"41350070322027412","l18":"آمیتیس","l30":"صندوق س.سهامی درخشان آمیتیس-س"},{"id":"43687681374952885","l18":"فلزا2","l30":"صندوق س.بخشی صنایع پاداش2-ب"},{"id":"52806889703092757","l18":"پایا2","l30":"صندوق س.پایا قلک پویا-د"},{"id":"54162468776731366","l18":"افران4","l30":"صندوق س افرا نماد پایدار-ثابت"},{"id":"63315013743060811","l18":"ثنور","l30":"سرمایه گذاری کوه نور"},{"id":"64701620739344512","l18":"افران2","l30":"صندوق س افرا نماد پایدار-ثابت"},{"id":"65515327786801805","l18":"البرز4","l30":"بیمه البرز"},{"id":"67852458665087862","l18":"سیمرغ4","l30":"سیمرغ"},{"id":"71384642067834448","l18":"فاسمین4","l30":"کالسیمین"},{"id":"2569740470679771","l18":"وبهمن4","l30":"سرمایه‌گذاری‌بهمن"},{"id":"7670135462634715","l18":"پتروما","l30":"ص.س.بخشی افق دماوند1-ب"},{"id":"8336106940667502","l18":"فارما کیان2","l30":"صندوق س. بخشی کیان-ب"},{"id":"8456220681927384","l18":"بنکوداریوش","l30":"صندوق س.بخشی داریوش3-ب"},{"id":"15451317146134956","l18":"افق ملت","l30":"صندوق س در سهام افق ملت"},{"id":"19060477008033661","l18":"پارسان2","l30":"گسترش نفت و گاز پارسیان"},{"id":"22502096062763695","l18":"والبر4","l30":"سرمایه‌ گذاری‌ البرز(هلدینگ"},{"id":"29884261753438378","l18":"یاقوت2","l30":"صندوق س یاقوت آگاه-ثابت"},{"id":"30423700781527626","l18":"اعتماد2","l30":"صندوق س.اعتماد آفرین پارسیان-د"},{"id":"32182002841162942","l18":"بازده2","l30":"صندوق س. بازده ثابت-د"},{"id":"34610263803983222","l18":"خودرو2","l30":"ایران‌ خودرو"},{"id":"36754116702391358","l18":"ونفت4","l30":"سرمایه‌گذاری‌ صنعت‌ نفت"},{"id":"37222720235819361","l18":"بذر","l30":"صندوق س بذر امید آفرین-سهام"},{"id":"38732168937429122","l18":"نیلی4","l30":"صندوق س. نوع دوم نیلی دماوند-د"},{"id":"40912525017440979","l18":"آبنوس","l30":"صندوق س.سهامی سهام نگر کیمیا-س"},{"id":"41549354947422432","l18":"پتروفارس","l30":"صندوق س.بخشی خبره خلیج فارس-ب"},{"id":"41874435286844039","l18":"ناب2","l30":"صندوق س.پشتوانه طلا نهایت نگر"},{"id":"49782064767608295","l18":"دی سهام","l30":"صندوق س.دی سهام-سهام"},{"id":"50094941173290382","l18":"اکسیژن","l30":"صندوق س. سهامی اکسیژن-س"},{"id":"51194216865511694","l18":"هوشمند2","l30":"صندوق س شاخصی شفق رابین"},{"id":"51285326016186930","l18":"صدف","l30":"صندوق س صدف سهام-سهام"},{"id":"52453606539681660","l18":"خورشید2","l30":"صندوق س. طلوع تدبیر پایا-د"},{"id":"52455922800537930","l18":"تکنار","l30":"مجتمع معادن مس تکنار"},{"id":"54047851116381400","l18":"لبخند4","l30":"صندوق س. لبخند فارابی-د"},{"id":"59800986739603675","l18":"شسم","l30":"تولید سموم‌ علف‌ کش"},{"id":"59848307608894801","l18":"گپارس","l30":"امور رفاهی کارگزاران پارس"},{"id":"61483657213051835","l18":"بازبیمه","l30":"صندوق س.بخشی بازده صنایع1-ب"},{"id":"62575434414985179","l18":"اوج","l30":"صندوق س.اوج دماوند-س"},{"id":"64819278905724553","l18":"فاخر2","l30":"صندوق س.ثروت افزون فاخر-د"},{"id":"66264163366013063","l18":"وبملت2","l30":"بانک ملت"},{"id":"68663404861394640","l18":"زمرد کوروش4","l30":"صندوق س زمرد کوروش-ثابت"},{"id":"69081464170052337","l18":"سپیدما2","l30":"صندوق س. سپید دماوند-د"},{"id":"69982198727370385","l18":"وتوصا4","l30":"گروه س توسعه صنعتی ایران"},{"id":"70698197503236949","l18":"پتروپاداش2","l30":"صندوق س.بخشی صنایع پاداش1-ب"},{"id":"71516048161401340","l18":"کمند2","l30":"صندوق س. با درآمد ثابت کمند"},{"id":"701233468667190","l18":"پتروصبا2","l30":"صندوق س صنایع اندیشه صبا1-بخشی"},{"id":"2992846609726856","l18":"فیروزا4","l30":"صندوق ارمغان فیروزه آسیا-ثابت"},{"id":"5037412364624353","l18":"غبهنوش2","l30":"بهنوش‌ ایران"},{"id":"5051727550286539","l18":"ثبات2","l30":"صندوق س. ثبات ویستا -د"},{"id":"5348624114105057","l18":"وساخت4","l30":"سرمایه‌ گذاری‌ ساختمان‌ایران"},{"id":"7516760567137512","l18":"دتماد2","l30":"تولیدمواداولیه‌داروپخش"},{"id":"7907432614475432","l18":"ارمغان2","l30":"ص سرمایه گذاری ارمغان ایرانیان"},{"id":"8602793697394313","l18":"فرصت","l30":"صندوق س فرصت آفرین سرمایه-سهام"},{"id":"9397180812472958","l18":"شمیم4","l30":"صندوق س.درآمدثابت شمیم تابان-د"},{"id":"9602593150636254","l18":"پالایش2","l30":"صندوق پالایشی یکم-سهام"},{"id":"10367678011039964","l18":"تصمیم2","l30":"صندوق س با درآمد ثابت تصمیم"},{"id":"10368700486623325","l18":"کارا2","l30":"صندوق س. کارا -د"},{"id":"10495792182142221","l18":"زیتون2","l30":"صندوق س زیتون نماد پایا- مختلط"},{"id":"16128056659300776","l18":"ترنج ثابت2","l30":"ص.س.درآمد ثابت ترنج سودمند-د"},{"id":"16578517055478811","l18":"تیام","l30":"صندوق س.سهامی تیام-س"},{"id":"16691828964965843","l18":"اندوخته داریوش2","l30":"ص.س.درآمدثابت اندوخته داریوش-د"},{"id":"16888365520630451","l18":"هم وزن2","l30":"صندوق س. شاخصی کیان-س"},{"id":"17680599410952472","l18":"کپشیر4","l30":"پشم‌شیشه‌ایران"},{"id":"19452192920639600","l18":"بلوط2","l30":"صندوق س شکوه بامداد زاگرس-ثابت"},{"id":"23094395247910963","l18":"پخش2","l30":"پخش البرز"},{"id":"24651304184097917","l18":"تاصیکو2","l30":"سرمایه گذاری صدرتامین"},{"id":"25127501722065703","l18":"فردا4","l30":"صندوق س آوای فردای زاگرس-ثابت"},{"id":"26316376625263940","l18":"پی پاد","l30":"پرداخت الکترونیک پاسارگاد"},{"id":"26458514535443899","l18":"خلیج","l30":"صندوق س.گنجینه مینوخلیج فارس-س"},{"id":"27025263421446871","l18":"زمرد کوروش2","l30":"صندوق س زمرد کوروش-ثابت"},{"id":"27762840132654633","l18":"سیستم4","l30":"همکاران سیستم"},{"id":"29385985953736017","l18":"فلوله4","l30":"لوله‌وماشین‌سازی‌ایران"},{"id":"29751216137877139","l18":"شبریز2","l30":"پالایش نفت تبریز"},{"id":"30410848366917751","l18":"سشرق4","l30":"سیمان‌ شرق"},{"id":"30977848913870955","l18":"برکت4","l30":"گروه دارویی برکت"},{"id":"32112121249636248","l18":"ثنا","l30":"صندوق س.زرین نهال ثنا-س"},{"id":"33903462343209810","l18":"پناه2","l30":"صندوق س.بخشی شایسته فردا-ب"},{"id":"34539190646780083","l18":"تاراز2","l30":"صندوق س آوای تاراز زاگرس-سهام"},{"id":"34728319594918952","l18":"خوشه2","l30":"ص.س.صندوق در صندوق خوشه گندم"},{"id":"35369183060321179","l18":"ومشان","l30":"س. فنی و مهندسی مشانیر"},{"id":"35693242297525330","l18":"سآبیک2","l30":"سیمان آبیک"},{"id":"36847745437379950","l18":"کاج2","l30":"صندوق س. نوع دوم نو ویرا -د"},{"id":"36904278221198019","l18":"سپاها2","l30":"سیمان‌سپاهان"},{"id":"37410990525917550","l18":"نیلی2","l30":"صندوق س. نوع دوم نیلی دماوند-د"},{"id":"39329349079135923","l18":"سپیدما4","l30":"صندوق س. سپید دماوند-د"},{"id":"41560235380550253","l18":"نان2","l30":"صنایع غذایی رضوی"},{"id":"41674555503081813","l18":"صنم2","l30":"ص.س.صندوق در صندوق صنم"},{"id":"42162172703979745","l18":"سخوز2","l30":"سیمان خوزستان"},{"id":"42705920381780437","l18":"ترمه","l30":"صندوق سرمایه گذاری ترمه-سهام"},{"id":"43909487941333003","l18":"اسیاتک4","l30":"انتقال داده های آسیاتک"},{"id":"44573833355728012","l18":"دعبید2","l30":"لابراتوارداروسازی‌ دکترعبیدی"},{"id":"45928267225042656","l18":"همای2","l30":"صندوق س همای آگاه-ثابت"},{"id":"48188099664657155","l18":"وکار4","l30":"بانک‌ کارآفرین"},{"id":"55537729602532087","l18":"اصیل2","l30":"صندوق درآمدثابت مشترک البرز-د"},{"id":"59750654860162208","l18":"شیران2","l30":"س. صنایع‌شیمیایی‌ایران"},{"id":"59943876909066279","l18":"دفرا2","l30":"فرآورده‌های‌ تزریقی‌ ایران"},{"id":"60996557641329487","l18":"ثابت اکسیژن2","l30":"ص.س.درآمد ثابت اکسیژن-د"},{"id":"62459939265416851","l18":"آریان2","l30":"سرمایه گذاری پارس آریان"},{"id":"62558705479545830","l18":"سایرا","l30":"ایرانیت"},{"id":"62845384302495432","l18":"هیوا","l30":"صندوق س. ثروت هیوا-س"},{"id":"63886404454477678","l18":"رخش","l30":"صندوق س.سهامی ثروت البرز-س"},{"id":"65104206673446248","l18":"چکارن2","l30":"کارتن‌ ایران"},{"id":"65736765815044639","l18":"بنکر","l30":"صندوق س صنایع اندیشه صبا2-بخشی"},{"id":"66220730726109607","l18":"طلوع2","l30":"صندوق س.طلوع نوین ثابت-د"},{"id":"69878275071298584","l18":"رنیک2","l30":"جنرال مکانیک"},{"id":"70766443960930830","l18":"بهین رو2","l30":"صندوق س صنایع ویستا1-بخشی"},{"id":"70814539916874907","l18":"رابین2","l30":"صندوق س. توسعه افق رابین-د"},{"id":"71523045480231681","l18":"اعتماد4","l30":"صندوق س.اعتماد آفرین پارسیان-د"},{"id":"242750052633792","l18":"وتوشه4","l30":"سرمایه‌ گذاری‌ پارس‌ توشه"},{"id":"3927545069816217","l18":"سپینود","l30":"صندوق س.سهامی سپینود-س"},{"id":"5915658944559224","l18":"حتاید4","l30":"تایدواترخاورمیانه"},{"id":"6066344867628792","l18":"غبشهر4","l30":"صنعتی‌ بهشهر"},{"id":"6279426571085158","l18":"دیار","l30":"صندوق س.مشترک دیار-سهام"},{"id":"7978091950964129","l18":"وبشهر4","l30":"توسعه‌ صنایع‌ بهشهر(هلدینگ"},{"id":"8169868421261319","l18":"تدبیریکم","l30":"ص.س جسورانه ارزش تدبیر30%تادیه"},{"id":"9375107506435996","l18":"هوشیار","l30":"صندوق س.هوش تصمیم -س"},{"id":"10843114830116591","l18":"نبروج","l30":"نساجی بروجرد"},{"id":"15124889255100138","l18":"رویش","l30":"ص.س.جسورانه رویش لوتوس"},{"id":"25026237540162001","l18":"غپینو4","l30":"پارس‌ مینو"},{"id":"26547362091465395","l18":"دیوان","l30":"صندوق خصوصی دیوان ارزش35%تادیه"},{"id":"27299841173245405","l18":"داراب","l30":"پتروشیمی داراب"},{"id":"27812005859539773","l18":"ثروت","l30":"ص.خ.ثروت آفرین فیروزه"},{"id":"31049085025064185","l18":"شتهران","l30":"داروسازی تهران شیمی"},{"id":"41746336706469006","l18":"پیروز","l30":"صندوق س.سهامی امین نهایت نگر-س"},{"id":"44052047028305231","l18":"پشاهن","l30":"تولیدی پلاستیک‌ شاهین"},{"id":"45062188442385800","l18":"تفیرو","l30":"مهندسی فیروزا"},{"id":"48818952524587858","l18":"پرتو","l30":"صندوق س. پرتو پایش پیشرو-س"},{"id":"48970598895465763","l18":"پویا","l30":"ص.ج.پویا الگوریتم70%تادیه"},{"id":"49129081625829210","l18":"نشار","l30":"کارخانجات پشمبافی افشار یزد"},{"id":"49476995682152689","l18":"بورس4","l30":"بورس اوراق بهادار تهران"},{"id":"54320265927595457","l18":"فرآور4","l30":"فرآوری‌موادمعدنی‌ایران"},{"id":"55112727496634477","l18":"فروس4","l30":"فروسیلیس‌ ایران"},{"id":"57585821705408565","l18":"ونچر","l30":"ص.ج.فیروزه"},{"id":"58602432837130018","l18":"شکف","l30":"کف"},{"id":"58965710006903807","l18":"کمان","l30":"س.خ.کمان کاریزما 35% تادیه"},{"id":"63555882930905460","l18":"بامداد","l30":"ص.س جسورانه یکم بامداد20%تادیه"},{"id":"63888998422355039","l18":"نوآور","l30":"ص.اعتبارسرمایه نوآفرین"},{"id":"66210395067138534","l18":"شتولی","l30":"تولی‌پرس"},{"id":"66361963458434647","l18":"وپترو4","l30":"سرمایه‌گذاری صنایع پتروشیمی"},{"id":"71124661158524264","l18":"افق نگر","l30":"ص.س جسورانه افق نگر20%تادیه"},{"id":"71856634742001725","l18":"سپ","l30":"پرداخت الکترونیک سامان کیش"}];
+
+function normalizeFa(s){
+  return (s||'').toString().trim()
+    .replace(/[يى]/g,'ی').replace(/ك/g,'ک')
+    .replace(/[\u200c\u200d]/g,'').replace(/\s+/g,'')
+    .toLowerCase();
+}
+function normalizeDigits(s){
+  return String(s||'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+}
+function cleanInsCode(s){ return normalizeDigits(s).replace(/[^0-9]/g,''); }
+// جستجوی آنلاین برای نمادهایی که در SYMBOL_CATALOG قدیمی نیستند.
+// اول از BRS API تنظیم‌شده در برنامه استفاده می‌کنیم؛ اگر در دسترس نبود، TSETMC را امتحان می‌کنیم.
+function rowSymbol(r){
+  const id = r?.id ?? r?.insCode ?? r?.InsCode ?? r?.instrumentCode;
+  const l18 = r?.l18 ?? r?.lVal18AFC ?? r?.LVal18AFC ?? r?.symbol ?? r?.Symbol;
+  const l30 = r?.l30 ?? r?.lVal30 ?? r?.LVal30 ?? r?.name ?? r?.Name ?? '';
+  if(id==null || !l18) return null;
+  return {id:String(id), l18:String(l18), l30:String(l30), raw:r};
+}
+function extractRows(raw){
+  const rows=Array.isArray(raw)?raw:(raw?.data||raw?.result||raw?.symbols||raw?.marketwatch||raw?.instrumentSearch||[]);
+  return Array.isArray(rows)?rows.map(rowSymbol).filter(Boolean):[];
+}
+
+
+
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ console.error('load failed', e); }
+  return {people:[], shares:[], purchases:[], sales:[], cashTransactions:[], apiKey:'', apiEndpoint:'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php'};
+}
+function saveLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      people:S.people, shares:S.shares, purchases:S.purchases, sales:S.sales, cashTransactions:S.cashTransactions,
+      apiKey:S.apiKey, apiEndpoint:S.apiEndpoint, autoRefreshMin:S.autoRefreshMin||0
+    }));
+  }catch(e){
+    console.error('save failed', e);
+    toast('ذخیره‌سازی با خطا مواجه شد — حافظه مرورگر پر یا غیرفعال است');
+  }
+}
+
+/** add/update/delete against S[type], persisting to localStorage after each change. */
+function addRecord(type, data){
+  const rec = Object.assign({id: uid4()+Date.now().toString(36)}, data);
+  S[type].push(rec); saveLocal(); render();
+  return rec;
+}
+function updateRecord(type, id, patch){
+  const idx = S[type].findIndex(x=>x.id===id);
+  if(idx<0) return;
+  S[type][idx] = Object.assign({}, S[type][idx], patch);
+  saveLocal(); render();
+}
+function deleteRecord(type, id){
+  S[type] = S[type].filter(x=>x.id!==id);
+  saveLocal(); render();
+}
+
+function init(){
+  const data = loadLocal();
+  S.people = data.people||[]; S.shares = data.shares||[];
+  S.purchases = data.purchases||[]; S.sales = data.sales||[]; S.cashTransactions = data.cashTransactions||[];
+  S.apiKey = data.apiKey || '';
+  S.autoRefreshMin = Number(data.autoRefreshMin)||0;
+  S.apiEndpoint = data.apiEndpoint || 'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php';
+  S.shares.forEach(sh=>{
+    if(sh.profitAlertPct==null) sh.profitAlertPct = 0;
+    if(sh.volumeAlertPct==null) sh.volumeAlertPct = 0;
+  });
+  S.ready = true;
+  saveLocal();
+  render();
+}
+
+/* ---------------- derived data ---------------- */
+function personById(id){ return S.people.find(p=>p.id===id); }
+function shareById(id){ return S.shares.find(s=>s.id===id); }
+
+function openPurchasesForShare(shareId){
+  return S.purchases.filter(p=>p.shareId===shareId && p.status==='open');
+}
+function purchasesForPerson(personId){
+  return S.purchases.filter(p=>p.personId===personId);
+}
+function purchasesForShare(shareId){
+  return S.purchases.filter(p=>p.shareId===shareId);
+}
+
+function shareStats(shareId){
+  const purchases = purchasesForShare(shareId);
+  let invested=0, openQty=0, openCost=0, soldQty=0, soldCost=0, revenue=0;
+  purchases.forEach(p=>{
+    const cost = p.quantity*p.unitPrice;
+    invested += cost;
+    if(p.status==='open'){ openQty+=p.quantity; openCost+=cost; }
+  });
+  S.sales.filter(s=>s.shareId===shareId).forEach(s=>{
+    soldQty += s.quantity; soldCost += s.quantity*s.buyPrice; revenue += s.quantity*s.salePrice;
+  });
+  const profit = revenue - soldCost;
+  const profitPct = soldCost>0 ? (profit/soldCost*100) : 0;
+  return {invested, openQty, openCost, soldQty, soldCost, revenue, profit, profitPct};
+}
+
+function overallStats(){
+  let invested=0, revenue=0, soldCost=0, openCost=0;
+  S.purchases.forEach(p=>{ const c=p.quantity*p.unitPrice; invested+=c; if(p.status==='open') openCost+=c; });
+  S.sales.forEach(s=>{ revenue += s.quantity*s.salePrice; soldCost += s.quantity*s.buyPrice; });
+  const profit = revenue - soldCost;
+  const profitPct = soldCost>0 ? (profit/soldCost*100) : 0;
+  return {invested, revenue, soldCost, openCost, profit, profitPct, shareCount:S.shares.length, peopleCount:S.people.length};
+}
+
+/* ---------------- nav / router ---------------- */
+const TAB_ORDER=['dashboard','people','shares','other'];
+let NAV_READY=false, SHEET_HISTORY=false, INTERNAL_POP=false;
+function activeTabView(){ return ['cash','history','reports'].includes(S.view) ? 'other' : S.view; }
+function initNavHistory(){
+  if(!history.state || !history.state.sahm){ history.replaceState({sahm:true,root:true,view:'dashboard'},'',location.href); history.pushState({sahm:true,rootGuard:true,view:'dashboard'},'',location.href); }
+  NAV_READY=true;
+}
+function animateView(direction){
+  const app=$('#app'); if(!app||!direction) return;
+  app.classList.remove('view-enter-from-right','view-enter-from-left');
+  void app.offsetWidth;
+  app.classList.add(direction==='next'?'view-enter-from-right':'view-enter-from-left');
+  setTimeout(()=>app.classList.remove('view-enter-from-right','view-enter-from-left'),280);
+}
+function setView(v, opts={}){
+  if(v===S.view && !opts.force) return;
+  const oldTab=activeTabView();
+  const newTab=['cash','history','reports'].includes(v)?'other':v;
+  const oi=TAB_ORDER.indexOf(oldTab), ni=TAB_ORDER.indexOf(newTab);
+  const direction=opts.direction || (ni>oi || (oi===TAB_ORDER.length-1 && ni===0) ? 'next' : 'prev');
+  if($('#ovSheet')){ closeSheet(true); if(NAV_READY) history.replaceState({sahm:true,view:S.view},'',location.href); }
+  S.expandedShareId=null; S.view=v;
+  if(NAV_READY && !opts.fromPop && !opts.skipHistory){ history.pushState({sahm:true,view:v},'',location.href); }
+  render(); window.scrollTo({top:0,behavior:'auto'}); animateView(direction);
+}
+function navigateTab(delta){
+  const cur=activeTabView(), idx=TAB_ORDER.indexOf(cur);
+  const ni=(idx+delta+TAB_ORDER.length)%TAB_ORDER.length;
+  setView(TAB_ORDER[ni],{direction:delta>0?'next':'prev'});
+}
+function fabAction(){
+  if(S.view==='people') return openPersonForm();
+  if(S.view==='shares') return openShareForm();
+  if(S.view==='cash') return openCashForm();
+  if(S.view==='other') return;
+  openBuyForm();
+}
+function render(){
+  if(!S.ready) return;
+  const av=activeTabView();
+  $$('.nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===av));
+  const badge=$('#saleAlertBadge'); if(badge){ const n=saleAlertShares().length; badge.textContent=n>99?'99+':String(n); badge.style.display=n?'flex':'none'; }
+  const fab = $('#fabBtn');
+  fab.style.display = ['dashboard','people','shares','cash'].includes(S.view) ? 'flex' : 'none';
+  if(S.view==='dashboard') return renderDashboard();
+  if(S.view==='people') return renderPeople();
+  if(S.view==='shares') return renderShares();
+  if(S.view==='cash') return renderCash();
+  if(S.view==='history') return renderHistory();
+  if(S.view==='reports') return renderReports();
+  if(S.view==='other') return renderOther();
+}
+function renderOther(){
+  $('#app').innerHTML=`
+    <div class="section-title">سایر</div>
+    <div class="other-menu">
+      <button class="other-menu-item" onclick="setView('cash')"><div><b>واریز و برداشت</b><div class="hint">مدیریت نقدینگی و موجودی اشخاص</div></div><span>‹</span></button>
+      <button class="other-menu-item" onclick="setView('history')"><div><b>تراکنش‌ها</b><div class="hint">سوابق خرید و فروش ثبت‌شده</div></div><span>‹</span></button>
+      <button class="other-menu-item" onclick="setView('reports')"><div><b>گزارش‌ها</b><div class="hint">خلاصه عملکرد و سود و زیان</div></div><span>‹</span></button>
+    </div>`;
+}
+
+// Android / browser back: close overlays first, then sub-pages, then return to dashboard.
+window.addEventListener('popstate',()=>{
+  if(INTERNAL_POP){ INTERNAL_POP=false; return; }
+  if($('#ovSheet')){ SHEET_HISTORY=false; closeSheet(true); return; }
+  if(S.view!=='dashboard'){ setView('dashboard',{fromPop:true,skipHistory:true,direction:'prev'}); return; }
+  try{ window.close(); }catch(e){}
+  setTimeout(()=>{ try{ if(!document.hidden) history.back(); }catch(e){} },120);
+});
+
+let SWIPE={x:0,y:0,t:0,active:false};
+document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1) return;
+  if($('#ovSheet')||$('#jalaliPicker')) return;
+  const t=e.target; if(t.closest('input,textarea,select,button,a,[contenteditable="true"]')) return;
+  const p=e.touches[0]; SWIPE={x:p.clientX,y:p.clientY,t:Date.now(),active:true};
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!SWIPE.active) return;
+  const p=e.changedTouches[0], dx=p.clientX-SWIPE.x, dy=p.clientY-SWIPE.y, dt=Date.now()-SWIPE.t; SWIPE.active=false;
+  if(dt>650 || Math.abs(dx)<55 || Math.abs(dx)<Math.abs(dy)*1.25) return;
+  // finger left => next tab; finger right => previous tab.
+  navigateTab(dx<0?1:-1);
+},{passive:true});
+
+/* ---------------- CUSTOM PULL TO REFRESH ---------------- */
+let PULL={x:0,y:0,active:false,triggered:false};
+document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1 || $('#ovSheet') || $('#jalaliPicker')) return;
+  const p=e.touches[0];
+  if(window.scrollY<=0 && document.documentElement.scrollTop<=0 && document.body.scrollTop<=0 && !e.target.closest('input,textarea,select,button,a,[contenteditable="true"]')) PULL={x:p.clientX,y:p.clientY,active:true,triggered:false};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!PULL.active) return;
+  const p=e.touches[0], dy=p.clientY-PULL.y;
+  if(dy<=0){PULL.active=false;return;}
+  const el=$('#pullRefresh'); if(!el)return;
+  const progress=Math.min(1,dy/80);
+  el.style.transform=`translate(-50%,${(-70+70*progress)}px)`;
+  el.style.opacity=String(.15+.85*progress);
+  if(dy>=60){el.classList.add('show');PULL.triggered=true;}
+},{passive:true});
+document.addEventListener('touchend',async()=>{
+  if(!PULL.active)return;
+  const el=$('#pullRefresh'); PULL.active=false;
+  if(PULL.triggered){
+    el.classList.add('show','spin'); el.style.transform='translate(-50%,0)'; el.style.opacity='1';
+    try{ await refreshPrices(); }finally{setTimeout(()=>{el.classList.remove('show','spin');el.style.transform='translate(-50%,-70px)';el.style.opacity='0';},280);}
+  }else{el.classList.remove('show');el.style.transform='translate(-50%,-70px)';el.style.opacity='0';}
+},{passive:true});
+
+/* ---------------- DASHBOARD ---------------- */
+function shareAlertInfo(sh){
+  const opens=openPurchasesForShare(sh.id);
+  const cost=opens.reduce((a,p)=>a+p.quantity*p.unitPrice,0);
+  const qty=opens.reduce((a,p)=>a+p.quantity,0);
+  const avgCost=qty>0 ? cost/qty : null;
+  const price=Number(sh.currentPrice)||null;
+  const profitPct=(price!=null && avgCost>0) ? ((price/avgCost)-1)*100 : null;
+  const volume=Number(sh.marketVolume)||0;
+  const queue=Number(sh.buyQueueVolume)||0;
+  const queuePrice=Number(sh.buyQueuePrice)||0;
+  const upperLimit=Number(sh.upperLimit)||0;
+  const hasBuyQueue=opens.length>0 && queue>0 && queuePrice>0 && upperLimit>0 && queuePrice>=upperLimit;
+  const volumeToQueuePct=hasBuyQueue ? (volume/queue)*100 : null;
+  const hasOpen=opens.length>0; // سهم کاملاً فروخته‌شده هیچ‌وقت هشدار نمی‌دهد
+  const queueHit=hasOpen && sh.queueBreakAlert!==false && !!sh.queueBroken;
+  const profitHit=hasOpen && Number(sh.profitAlertPct)>0 && profitPct!=null && profitPct>=Number(sh.profitAlertPct);
+  const volumeHit=hasOpen && Number(sh.volumeAlertPct)>0 && volumeToQueuePct!=null && volumeToQueuePct>=Number(sh.volumeAlertPct);
+  return {avgCost,profitPct,volumeToQueuePct,profitHit,volumeHit,queueHit,volume,queue};
+}
+function alertLabel(sh){
+  const a=shareAlertInfo(sh);
+  const n=[a.profitHit,a.volumeHit,a.queueHit].filter(Boolean).length;
+  if(n>=2) return 'چند هشدار فروش';
+  if(a.queueHit) return 'صف خرید شکست';
+  if(n===1) return 'هشدار فروش';
+  return '';
+}
+function saleAlertShares(){ return S.shares.filter(sh=>{const a=shareAlertInfo(sh);return a.profitHit||a.volumeHit||a.queueHit;}); }
+// هر هشدار یک کلید دارد تا فقط هشدارِ تازه نوتیف بدهد.
+function alertItems(){
+  const out=[];
+  S.shares.forEach(sh=>{
+    const a=shareAlertInfo(sh);
+    if(a.profitHit) out.push({key:sh.id+'|p',type:'p',sh});
+    if(a.volumeHit) out.push({key:sh.id+'|v',type:'v',sh});
+    if(a.queueHit) out.push({key:sh.id+'|q',type:'q',sh});
+  });
+  return out;
+}
+function ackQueueBreak(id){ updateRecord('shares',id,{queueBroken:false}); closeSheet(); toast('هشدار شکستن صف بسته شد'); }
+function notifStatusText(){
+  if(!('Notification' in window)) return 'این مرورگر از اعلان پشتیبانی نمی‌کند';
+  return {granted:'فعال',denied:'مسدود (از تنظیمات مرورگر/سایت باز کنید)',default:'هنوز اجازه داده نشده'}[Notification.permission]||'—';
+}
+async function showAppNotification(title, body){
+  const opts={body,tag:'sahm-sale-alert',renotify:true,icon:'icon-192.png',badge:'icon-192.png',dir:'rtl',lang:'fa'};
+  try{ // اندروید فقط از طریق Service Worker اعلان می‌دهد
+    if('serviceWorker' in navigator){
+      const reg=await Promise.race([navigator.serviceWorker.ready,new Promise(r=>setTimeout(()=>r(null),1500))]);
+      if(reg){ await reg.showNotification(title,opts); return true; }
+    }
+  }catch(e){}
+  try{ new Notification(title,opts); return true; }catch(e){ return false; }
+}
+async function requestSaleNotifications(){
+  if(!('Notification' in window)){ toast('این مرورگر از اعلان پشتیبانی نمی‌کند'); return; }
+  if(Notification.permission==='denied'){ toast('اعلان‌ها مسدود شده‌اند؛ از تنظیمات مرورگر فعالشان کنید'); return; }
+  if(Notification.permission!=='granted'){
+    const p=await Notification.requestPermission();
+    if(p!=='granted'){ toast('اجازه اعلان داده نشد'); return; }
+  }
+  const ok=await showAppNotification('دفتر سهام','اعلان‌ها فعال شد ✓');
+  toast(ok?'اعلان‌ها فعال شد':'اجازه داده شد ولی نمایش اعلان ناموفق بود؛ برنامه را نصب (PWA) کنید');
+  if($('#st_notif_status')) $('#st_notif_status').textContent=notifStatusText();
+}
+async function notifySaleAlerts(items){
+  if(!items.length || !('Notification' in window) || Notification.permission!=='granted') return;
+  const label={p:'به حد سود رسید',v:'نسبت حجم به صف به حد هشدار رسید',q:'صف خرید شکست'};
+  await showAppNotification('هشدار فروش سهام', items.map(x=>`${x.sh.name||'نماد'}: ${label[x.type]}`).join('\n'));
+}
+
+// بروزرسانی خودکار (اختیاری) — فقط وقتی برنامه باز و روی صفحه است
+let AUTO_TIMER=null, REFRESHING=false, LAST_REFRESH=0;
+function setupAutoRefresh(){
+  clearInterval(AUTO_TIMER); AUTO_TIMER=null;
+  const m=Number(S.autoRefreshMin)||0; if(!m) return;
+  AUTO_TIMER=setInterval(()=>{ if(!document.hidden && S.apiKey) refreshPrices({silent:true}); }, m*60000);
+}
+document.addEventListener('visibilitychange',()=>{
+  const m=Number(S.autoRefreshMin)||0;
+  if(!document.hidden && m && S.apiKey && Date.now()-LAST_REFRESH>m*60000) refreshPrices({silent:true});
+});
+
+/* ---------------- BRS API (فقط بورس و فرابورس: type=1) ---------------- */
+const BRS_TYPE = 1;
+const BRS_DEFAULT_ENDPOINT = 'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php';
+function brsListUrl(){
+  const endpoint=(S.apiEndpoint||BRS_DEFAULT_ENDPOINT).trim();
+  const sep=endpoint.includes('?')?'&':'?';
+  return endpoint+sep+'key='+encodeURIComponent(S.apiKey)+'&type='+BRS_TYPE;
+}
+function parsePrice(v){
+  const n=Number(normalizeDigits(v).replace(/[^0-9.]/g,''));
+  return Number.isFinite(n)&&n>0 ? n : null;
+}
+// قیمت زنده فقط اگر واقعاً مثبت باشد؛ نماد بسته/متوقف قیمت صفر یا خالی دارد و نباید قیمت دستی را خراب کند.
+function pickLivePrice(r){
+  for(const k of ['pl','pc','pf']){ const v=Number(r?.[k]); if(Number.isFinite(v)&&v>0) return v; }
+  return null;
+}
+
+async function refreshPrices(opts={}){
+  const silent=!!opts.silent; const say=m=>{ if(!silent) toast(m); };
+  if(REFRESHING) return;
+  if(!S.apiKey){ say('اول توکن BRS API را در تنظیمات وارد کنید'); return; }
+  const openShares=S.shares.filter(sh=>openPurchasesForShare(sh.id).length>0);
+  if(!openShares.length){ say('موقعیت باز برای بروزرسانی وجود ندارد'); return; }
+  const beforeKeys=new Set(alertItems().map(x=>x.key));
+  REFRESHING=true;
+  say('در حال دریافت قیمت‌ها…');
+  try{
+    const res=await fetch(brsListUrl(),{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows=extractRows(await res.json());
+    if(!rows.length) throw new Error('هیچ نمادی از API دریافت نشد');
+    const byId=new Map(), byName=new Map();
+    rows.forEach(x=>{
+      byId.set(String(x.id),x);
+      const k=normalizeFa(x.l18); if(!k) return;
+      if(!byName.has(k)) byName.set(k,[]);
+      byName.get(k).push(x);
+    });
+    let updated=0, kept=0;
+    const now=Date.now();
+    for(const sh of openShares){
+      // اول شناسه‌ی قدیمی (اگر از نسخه‌های قبل مانده)، بعد نام دقیق نماد. پیدا نشد = قیمت قبلی/دستی می‌ماند.
+      const idKey=cleanInsCode(sh.symbolId);
+      let cands=[];
+      if(idKey && byId.has(idKey)) cands=[byId.get(idKey)];
+      if(!cands.length) cands=byName.get(normalizeFa(sh.name)) || [];
+      if(!cands.length && sh.symbolCode) cands=byName.get(normalizeFa(sh.symbolCode)) || [];
+      let r=null, price=null;
+      for(const c of cands){ const pr=pickLivePrice(c.raw||c); if(pr){ r=c; price=pr; break; } }
+      if(!r){ kept++; continue; }
+      const raw=r.raw||r;
+      sh.currentPrice=price;
+      sh.priceSource='api';
+      sh.marketVolume=Number(raw.tvol)||0;        // حجم معاملات امروز
+      sh.buyQueueVolume=Number(raw.qd1)||0;       // حجم سطر اول خرید
+      sh.buyQueuePrice=Number(raw.pd1)||0;        // قیمت سطر اول خرید
+      sh.upperLimit=Number(raw.tmax)||0;          // آستانه مجاز بالا
+      sh.lastPriceChangePct=Number(raw.plp ?? raw.pcp)||0;
+      sh.lastApiUpdate=now;
+      // شکستن صف: قبلاً در صف خرید (قیمت خرید سطر اول ≥ آستانه بالا) بوده و حالا سفارش خرید پایین‌تر از سقف است.
+      // اگر تابلو کاملاً خالی باشد (مثلاً بعد از بسته شدن بازار) شکست حساب نمی‌شود و وضعیت قبلی می‌ماند.
+      const pd1=Number(raw.pd1)||0, qd1=Number(raw.qd1)||0, tmax=Number(raw.tmax)||0;
+      const nowInQueue = qd1>0 && pd1>0 && tmax>0 && pd1>=tmax;
+      const bookEmpty = pd1===0 && qd1===0;
+      if(nowInQueue){ sh.inQueue=true; sh.queueBroken=false; }
+      else if(!bookEmpty){
+        if(sh.inQueue){ sh.queueBroken=true; sh.queueBrokenAt=now; }
+        sh.inQueue=false;
+      }
+      updated++;
+    }
+    saveLocal(); render();
+    LAST_REFRESH=Date.now();
+    const alertShares=saleAlertShares();
+    const newItems=alertItems().filter(x=>!beforeKeys.has(x.key));
+    if(newItems.length) notifySaleAlerts(newItems);
+    say(`${updated} سهم بروزرسانی شد${kept?' · '+kept+' سهم با قیمت قبلی/دستی ماند':''}${alertShares.length?' · '+alertShares.length+' هشدار فروش':''}`);
+  }catch(e){
+    console.error('BRS API update failed',e);
+    say('دریافت قیمت ناموفق بود؛ توکن، دسترسی شبکه یا CORS را بررسی کنید');
+  }finally{ REFRESHING=false; }
+}
+
+function portfolioList(){
+  return S.shares.map(sh=>{
+    const opens = S.purchases.filter(p=>p.shareId===sh.id && p.status==='open');
+    if(!opens.length) return null;
+    const holderIds = [...new Set(opens.map(p=>p.personId))];
+    const cost = opens.reduce((a,p)=>a+p.quantity*p.unitPrice,0);
+    const qty = opens.reduce((a,p)=>a+p.quantity,0);
+    const hasPrice = sh.currentPrice!=null && sh.currentPrice!=='';
+    const value = hasPrice ? qty*sh.currentPrice : null;
+    const profit = hasPrice ? value-cost : null;
+    const profitPct = (hasPrice && cost>0) ? (profit/cost*100) : null;
+    return {share:sh, holderIds, cost, qty, value, profit, profitPct, opens};
+  }).filter(Boolean).sort((a,b)=> (b.profit==null?-Infinity:b.profit) - (a.profit==null?-Infinity:a.profit));
+}
+
+function togglePortfolioExpand(shareId){
+  S.expandedShareId = (S.expandedShareId===shareId) ? null : shareId;
+  render();
+}
+
+function renderPortfolioCard(item){
+  const {share, holderIds, cost, qty, value, profit, profitPct, opens} = item;
+  const expanded = S.expandedShareId===share.id;
+  const profitColor = profit==null ? 'var(--ink-soft)' : (profit>=0?'var(--pos)':'var(--neg)');
+  const alertInfo=shareAlertInfo(share);
+  const holdersRows = holderIds.map(pid=>{
+    const per = personById(pid);
+    const rowsForPerson = opens.filter(p=>p.personId===pid);
+    const pQty = rowsForPerson.reduce((a,p)=>a+p.quantity,0);
+    const pCost = rowsForPerson.reduce((a,p)=>a+p.quantity*p.unitPrice,0);
+    const pValue = share.currentPrice ? pQty*share.currentPrice : null;
+    const pProfit = pValue!=null ? pValue-pCost : null;
+    return `<button class="row" style="width:100%;background:none;text-align:right;padding:10px 12px;" onclick="event.stopPropagation(); openPersonDetail('${pid}')">
+      <div>
+        <div style="font-weight:600;font-size:13px;">${per?escapeHtml(per.name):'—'}</div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${fmtNum(pQty)} واحد · سرمایه ${fmtToman(pCost)}</div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:${pProfit==null?'var(--ink-soft)':(pProfit>=0?'var(--pos)':'var(--neg)')};">${pProfit==null?'—':fmtToman(pProfit)}</div>
+    </button>`;
+  }).join('');
+
+  return `<div class="card" style="margin-bottom:10px;">
+    <button class="row" style="width:100%;background:none;text-align:right;align-items:flex-start;" onclick="togglePortfolioExpand('${share.id}')">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2" style="margin-top:3px;transform:rotate(${expanded?'90':'0'}deg);transition:transform .15s;"><path d="M9 6l6 6-6 6"/></svg>
+        <div>
+          <div style="font-weight:700;font-size:14.5px;">${escapeHtml(share.name)}</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">${holderIds.length} نفر · سرمایه ${fmtToman(cost)}</div>
+        </div>
+      </div>
+      <div style="text-align:left;flex:none;">
+        <div class="pill ${alertLabel(share)?'neg':(profitPct==null?'muted':(profitPct>=0?'pos':'neg'))}">${alertLabel(share)|| (profitPct==null?'بدون قیمت روز':profitPct.toFixed(1)+'٪')}</div>
+        <div style="font-size:12.5px;margin-top:6px;font-weight:700;color:${profitColor};">${profit==null?'—':fmtToman(profit)}</div>
+        ${share.currentPrice?`<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">قیمت ${fmtNum(share.currentPrice)}${share.priceSource==='manual'?' (دستی)':''} · حجم/صف ${alertInfo.volumeToQueuePct==null?'—':alertInfo.volumeToQueuePct.toFixed(0)+'٪'}</div>`:''}
+      </div>
+    </button>
+    ${expanded? `<div style="border-top:1px solid var(--line);">${holdersRows}</div>` : ''}
+  </div>`;
+}
+
+function renderDashboard(){
+  const st = overallStats();
+  const alerts = saleAlertShares();
+  const portfolio = portfolioList();
+
+  $('#app').innerHTML = `
+    ${alerts.length? `<div class="banner info">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div>${alerts.length} عرضه اولیه به نقطه خروج تعریف‌شده رسیده‌اند: ${alerts.map(a=>a.name).join('، ')}</div>
+    </div>` : ''}
+    <div class="stats">
+      <div class="stat"><div class="lbl">سود خالص (فروش‌شده)</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
+      <div class="stat"><div class="lbl">درصد سود (فروش‌شده)</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
+      <div class="stat"><div class="lbl">سرمایه در گردش (باز)</div><div class="val">${fmtToman(st.openCost)}</div></div>
+      <div class="stat"><div class="lbl">تعداد اشخاص / عرضه اولیه‌ها</div><div class="val">${st.peopleCount} / ${st.shareCount}</div></div>
+    </div>
+
+    <div class="section-title">دسترسی سریع</div>
+    <div class="card">
+      <button class="row" style="width:100%;background:none;text-align:right;" onclick="openBuyForm()">
+        <span>ثبت خرید عرضه اولیه</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="row" style="width:100%;background:none;text-align:right;" onclick="openSellForm()">
+        <span>ثبت فروش</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="row" style="width:100%;background:none;text-align:right;" onclick="openPersonForm()">
+        <span>افزودن شخص جدید</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="refresh-row"><div class="section-title" style="margin:0;">پرتفوی (موقعیت‌های باز)</div><button class="btn secondary sm" onclick="refreshPrices()">بروزرسانی قیمت‌ها</button></div>
+    ${portfolio.length? portfolio.map(renderPortfolioCard).join('') : emptyBlock('پرتفویی وجود ندارد', 'بعد از ثبت خرید، هر عرضه اولیه با تعداد افراد، سرمایه و سود آن اینجا نشان داده می‌شود.')}
+  `;
+}
+
+/* ---------------- PEOPLE ---------------- */
+function renderPeople(){
+  const html = S.people.length ? `<div class="card">${S.people.map(p=>{
+    const purchases = purchasesForPerson(p.id);
+    const openCount = purchases.filter(x=>x.status==='open').length;
+    return `<button class="row" style="width:100%;background:none;text-align:right;" onclick="openPersonDetail('${p.id}')">
+      <div>
+        <div style="font-weight:600;font-size:14px;">${escapeHtml(p.name)}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">کد ملی ${maskNid(p.nationalId)} · ${openCount} موقعیت باز</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>`;
+  }).join('')}</div>` : emptyBlock('شخصی ثبت نشده', 'برای شروع، اطلاعات فامیل‌هایی که با کد ملی و کارتشان کار می‌کنید را اضافه کنید.');
+  $('#app').innerHTML = `<div class="section-title">اشخاص (${S.people.length})</div>${html}`;
+}
+
+function maskNid(nid){
+  if(!nid) return '—';
+  if(S.revealSensitive) return nid;
+  return nid.slice(0,3)+'••••'+nid.slice(-2);
+}
+
+function openPersonDetail(id){
+  const p = personById(id); if(!p) return;
+  const purchases = purchasesForPerson(id);
+  const rows = purchases.map(pu=>{
+    const sh = shareById(pu.shareId);
+    const sold = pu.status==='sold';
+    return `<tr>
+      <td>${sh?sh.name:'—'}</td>
+      <td class="num">${fmtNum(pu.quantity)}</td>
+      <td class="num">${fmtNum(pu.unitPrice)}</td>
+      <td>${sold? `<span class="pill pos">فروخته‌شده</span>` : `<span class="pill accent">باز</span>`}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn ghost sm" onclick="openLotEdit('${pu.id}')">ویرایش</button>
+        <button class="btn ghost sm" style="color:var(--neg);" onclick="deleteLot('${pu.id}')">حذف</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:18px 0;">معامله‌ای ثبت نشده</td></tr>`;
+
+  openSheet(`اطلاعات ${escapeHtml(p.name)}`, `
+    <div class="field"><label>کد ملی</label><div class="num" style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${p.nationalId||'—'}</div></div>
+    <div class="field-row">
+      <div class="field"><label>شماره کارت</label><div style="display:flex;gap:7px;align-items:center;"><div class="num" style="flex:1;padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${S.revealSensitive? (p.cardNumber||'—') : maskCard(p.cardNumber)}</div>${p.cardNumber?`<button class="copy-card-btn" onclick="copyText('${escapeAttr(p.cardNumber)}')">کپی</button>`:''}</div></div>
+      <div class="field"><label>تاریخ انقضا</label><div class="num" style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${p.cardExpiry||'—'}</div></div>
+    </div>
+    ${p.cardCvv2? `<div class="field"><label>CVV2</label><div class="num" style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${S.revealSensitive? p.cardCvv2 : maskCvv()}</div></div>` : ''}
+    ${p.phone? `<div class="field"><label>شماره تماس</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${escapeHtml(p.phone)}</div></div>` : ''}
+    ${p.notes? `<div class="field"><label>یادداشت</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);white-space:pre-wrap;">${escapeHtml(p.notes)}</div></div>` : ''}
+
+    <div class="section-title">موقعیت‌های این شخص</div>
+    <div class="card" style="padding:4px 10px;overflow:auto;">
+      <table><thead><tr><th>عرضه اولیه</th><th>تعداد</th><th>قیمت خرید</th><th>وضعیت</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button class="btn secondary" style="flex:1;" onclick="openPersonForm('${p.id}')">ویرایش</button>
+      <button class="btn danger" style="flex:1;" onclick="deletePerson('${p.id}')">حذف شخص</button>
+    </div>
+  `);
+}
+
+function openLotEdit(lotId){
+  const lot = S.purchases.find(x=>x.id===lotId); if(!lot) return;
+  const sh = shareById(lot.shareId); const per = personById(lot.personId);
+  openSheet(`ویرایش موقعیت — ${per?escapeHtml(per.name):''}`, `
+    <div class="field"><label>عرضه اولیه</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${sh?escapeHtml(sh.name):'—'}</div></div>
+    <div class="field-row">
+      <div class="field"><label>تعداد</label><input id="lot_qty" class="num" inputmode="numeric" value="${lot.quantity}"></div>
+      <div class="field"><label>قیمت خرید</label><input id="lot_price" class="num" inputmode="numeric" value="${lot.unitPrice}"></div>
+    </div>
+    <div class="field"><label>وضعیت</label>
+      <select id="lot_status">
+        <option value="open" ${lot.status==='open'?'selected':''}>باز</option>
+        <option value="sold" ${lot.status==='sold'?'selected':''}>فروخته‌شده (بدون ثبت در گزارش فروش)</option>
+      </select>
+      <div class="hint">تغییر وضعیت اینجا فقط برچسب موقعیت را عوض می‌کند؛ برای ثبت فروش با محاسبه سود، از دکمه «ثبت فروش» استفاده کنید.</div>
+    </div>
+    <button class="btn block" onclick="saveLotEdit('${lotId}')">ذخیره تغییرات</button>
+  `);
+}
+function saveLotEdit(lotId){
+  const qty = Number($('#lot_qty').value);
+  const price = Number($('#lot_price').value);
+  if(!qty || !price){ toast('تعداد و قیمت را درست وارد کنید'); return; }
+  const personId = S.purchases.find(x=>x.id===lotId)?.personId;
+  updateRecord('purchases', lotId, {quantity:qty, unitPrice:price, status:$('#lot_status').value});
+  toast('ذخیره شد');
+  if(personId) openPersonDetail(personId); else closeSheet();
+}
+function deleteLot(lotId){
+  if(!confirm('این موقعیت حذف شود؟ فروش‌های ثبت‌شده مرتبط با آن حذف نمی‌شوند.')) return;
+  const personId = S.purchases.find(x=>x.id===lotId)?.personId;
+  deleteRecord('purchases', lotId);
+  toast('حذف شد');
+  if(personId) openPersonDetail(personId); else closeSheet();
+}
+function openPersonForm(id){
+  const p = id ? personById(id) : null;
+  openSheet(p? 'ویرایش شخص' : 'شخص جدید', `
+    <div class="field"><label>نام و نام خانوادگی *</label><input id="f_name" value="${p?escapeAttr(p.name):''}" placeholder="مثلاً زهرا احمدی"></div>
+    <div class="field"><label>کد ملی *</label><input id="f_nid" class="num" inputmode="numeric" maxlength="10" value="${p?escapeAttr(p.nationalId||''):''}" placeholder="0000000000"></div>
+    <div class="field-row">
+      <div class="field"><label>شماره کارت</label><input id="f_card" class="num" inputmode="numeric" maxlength="19" value="${p?escapeAttr(p.cardNumber||''):''}" placeholder="6037-....-....-...."></div>
+      <div class="field"><label>تاریخ انقضا</label><input id="f_exp" class="num" maxlength="5" value="${p?escapeAttr(p.cardExpiry||''):''}" placeholder="MM/YY"></div>
+    </div>
+    <div class="field"><label>CVV2 (اختیاری)</label><input id="f_cvv" class="num" inputmode="numeric" maxlength="4" value="${p?escapeAttr(p.cardCvv2||''):''}" placeholder="برای انتقال بین‌بانکی معمولاً لازم نیست">
+      <div class="hint">نگهداری CVV2 توصیه نمی‌شود مگر واقعاً لازم باشد؛ این فیلد را خالی بگذارید اگر فقط واریز کارت‌به‌کارت انجام می‌دهید.</div>
+    </div>
+    <div class="field"><label>رمز دوم / شماره تماس (اختیاری)</label><input id="f_phone" value="${p?escapeAttr(p.phone||''):''}"></div>
+    <div class="field"><label>یادداشت</label><textarea id="f_notes" rows="2">${p?escapeHtml(p.notes||''):''}</textarea></div>
+    <button class="btn block" onclick="savePerson('${id||''}')">${p?'ذخیره تغییرات':'افزودن شخص'}</button>
+  `);
+}
+
+function savePerson(id){
+  const name = $('#f_name').value.trim();
+  const nationalId = $('#f_nid').value.trim();
+  if(!name || !nationalId){ toast('نام و کد ملی الزامی است'); return; }
+  const data = {
+    name, nationalId,
+    cardNumber: $('#f_card').value.trim(),
+    cardExpiry: $('#f_exp').value.trim(),
+    cardCvv2: $('#f_cvv').value.trim(),
+    phone: $('#f_phone').value.trim(),
+    notes: $('#f_notes').value.trim(),
+    updatedAt: Date.now(),
+  };
+  if(id){ updateRecord('people', id, data); }
+  else { data.createdAt = Date.now(); addRecord('people', data); }
+  closeSheet(); toast('ذخیره شد');
+}
+
+function deletePerson(id){
+  if(!confirm('این شخص حذف شود؟ (تراکنش‌های ثبت‌شده حذف نمی‌شوند)')) return;
+  deleteRecord('people', id);
+  closeSheet(); toast('حذف شد');
+}
+
+/* ---------------- SHARES ---------------- */
+function renderShares(){
+  const html = S.shares.length ? `<div class="card">${S.shares.map(sh=>{
+    const st = shareStats(sh.id);
+    const alertHit = alertLabel(sh);
+    return `<button class="row" style="width:100%;background:none;text-align:right;align-items:flex-start;" onclick="openShareDetail('${sh.id}')">
+      <div>
+        <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;">${escapeHtml(sh.name)} ${alertHit?`<span class="pill neg">${alertHit}</span>`:''}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">قیمت روز: ${sh.currentPrice?fmtToman(sh.currentPrice):'ثبت نشده'} · ${st.openQty} واحد باز${(()=>{const v=shareAlertInfo(sh).volumeToQueuePct;return v==null?'':` · حجم/صف ${v.toFixed(0)}٪`;})()}${sh.priceSource==='manual'&&sh.currentPrice?' · قیمت دستی':''}</div>
+      </div>
+      <div style="text-align:left;">
+        <div class="pill ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div>
+      </div>
+    </button>`;
+  }).join('')}</div>` : emptyBlock('عرضه اولیه‌ای ثبت نشده', 'هر عرضه اولیه که خریداری می‌کنید را اینجا تعریف کنید.');
+  $('#app').innerHTML = `<div class="section-title">عرضه اولیه‌ها (${S.shares.length})</div>${html}`;
+}
+
+function openShareForm(id){
+  const sh = id ? shareById(id) : null;
+  openSheet(sh?'ویرایش عرضه اولیه':'عرضه اولیه جدید', `
+    <div class="field"><label>نام / نماد *</label><input id="f_sname" value="${sh?escapeAttr(sh.name):''}" placeholder="هر نامی؛ برای بروزرسانی خودکار، نماد دقیق بورس/فرابورس"><div class="hint">اگر نام دقیقاً با یک نماد بورس یا فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود؛ وگرنه فقط قیمت دستی استفاده می‌شود.</div></div>
+    <div class="field"><label>قیمت دستی (تومان) — اختیاری</label><input id="f_price" class="num" inputmode="numeric" value="${sh?sh.currentPrice||'':''}" placeholder="مثلاً 12500"><div class="hint">برای نمادهای بسته که API قیمت نمی‌دهد. اگر بروزرسانی موفق باشد جایگزین می‌شود، در غیر این صورت همین قیمت می‌ماند.</div></div>
+    <div class="field"><label>درصد سود برای اعلان فروش</label><input id="f_profit_alert" class="num" inputmode="decimal" value="${sh?sh.profitAlertPct||'':''}" placeholder="مثلاً 20"><div class="hint">اگر سود فعلی نسبت به میانگین قیمت خرید به این درصد برسد، هشدار فروش فعال می‌شود.</div></div>
+    <div class="field"><label>درصد حجم معاملات نسبت به صف خرید برای اعلان فروش</label><input id="f_volume_alert" class="num" inputmode="decimal" value="${sh?sh.volumeAlertPct||'':''}" placeholder="مثلاً 50"><div class="hint">حجم معاملات روز ÷ حجم صف خرید × 100. فقط وقتی سهم در صف خرید (قیمت سطر اول خرید = آستانه مجاز بالا) باشد محاسبه می‌شود.</div></div>
+    <div class="field checkline"><input type="checkbox" id="f_queue_alert" ${(!sh||sh.queueBreakAlert!==false)?'checked':''}><label style="margin:0;" for="f_queue_alert">هشدار شکستن صف خرید</label></div>
+    <div class="field"><label>یادداشت</label><textarea id="f_snotes" rows="2">${sh?escapeHtml(sh.notes||''):''}</textarea></div>
+    <button class="btn block" onclick="saveShare('${id||''}')">${sh?'ذخیره تغییرات':'افزودن عرضه اولیه'}</button>
+  `);
+}
+
+function saveShare(id){
+  const name=$('#f_sname').value.trim();
+  if(!name){toast('نام عرضه اولیه را وارد کنید');return;}
+  const old=id?shareById(id):null;
+  const manual=parsePrice($('#f_price').value);
+  const data={name,profitAlertPct:Number($('#f_profit_alert').value)||0,volumeAlertPct:Number($('#f_volume_alert').value)||0,queueBreakAlert:$('#f_queue_alert').checked,notes:$('#f_snotes').value.trim(),updatedAt:Date.now()};
+  if(old){
+    if(old.name!==name){ data.symbolId=''; data.symbolCode=''; data.companyName=''; } // نام عوض شد؛ شناسه‌ی قدیمی معتبر نیست
+    if(manual==null){ data.currentPrice=null; data.priceSource=null; }
+    else if(manual!==Number(old.currentPrice)){ data.currentPrice=manual; data.priceSource='manual'; }
+    updateRecord('shares',id,data);
+  }else{
+    Object.assign(data,{symbolId:'',symbolCode:'',companyName:'',currentPrice:manual,priceSource:manual?'manual':null,marketVolume:0,buyQueueVolume:0,createdAt:Date.now()});
+    addRecord('shares',data);
+  }
+  closeSheet();toast('ذخیره شد');
+}
+
+
+function openShareDetail(id){
+  const sh = shareById(id); if(!sh) return;
+  const st = shareStats(id);
+  const purchases = purchasesForShare(id);
+  const alert=shareAlertInfo(sh);
+  const alertHit = alert.profitHit || alert.volumeHit || alert.queueHit;
+  const rows = purchases.map(pu=>{
+    const per = personById(pu.personId);
+    return `<tr><td>${per?per.name:'—'}</td><td class="num">${fmtNum(pu.quantity)}</td><td class="num">${fmtNum(pu.unitPrice)}</td>
+      <td>${pu.status==='sold'?'<span class="pill pos">فروخته</span>':'<span class="pill accent">باز</span>'}</td></tr>`;
+  }).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);padding:16px 0;">معامله‌ای نیست</td></tr>`;
+
+  openSheet(escapeHtml(sh.name), `
+    ${alertHit? `<div class="banner info"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><div>${[alert.profitHit?'هشدار سود فعال است':'',alert.volumeHit?'هشدار حجم نسبت به صف خرید فعال است':'',alert.queueHit?'صف خرید شکسته شده است':''].filter(Boolean).join(' · ')}</div>${alert.queueHit?`<button class="btn secondary sm" onclick="ackQueueBreak('${id}')">متوجه شدم</button>`:''}</div>` : ''}
+    <div class="stats">
+      <div class="stat"><div class="lbl">سود فروش‌شده</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
+      <div class="stat"><div class="lbl">درصد سود</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
+      <div class="stat"><div class="lbl">سرمایه باز</div><div class="val">${fmtToman(st.openCost)}</div></div>
+      <div class="stat"><div class="lbl">واحد باز</div><div class="val">${fmtNum(st.openQty)}</div></div>
+    </div>
+
+    <div class="field-row" style="margin-top:16px;">
+      <div class="field"><label>قیمت روز (تومان)</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${sh.currentPrice?fmtToman(sh.currentPrice):'ثبت نشده'}</div></div>
+      <div class="field" style="flex:0 0 auto;align-self:flex-end;"><button class="btn secondary" onclick="refreshPrices()">بروزرسانی قیمت</button></div>
+    </div>
+    <div class="api-status">منبع قیمت: <b>${sh.priceSource==='manual'?'دستی':(sh.priceSource==='api'?'API':'—')}</b>${sh.lastApiUpdate?' · آخرین بروزرسانی API: '+fmtDateTime(sh.lastApiUpdate):''}</div>
+    <div class="alert-grid">
+      <div class="alert-mini">سود فعلی: <b>${alert.profitPct==null?'—':alert.profitPct.toFixed(1)+'٪'}</b><br>حد هشدار: ${Number(sh.profitAlertPct)>0?sh.profitAlertPct+'٪':'خاموش'}</div>
+      <div class="alert-mini">حجم/صف: <b>${alert.volumeToQueuePct==null?'—':alert.volumeToQueuePct.toFixed(1)+'٪'}</b><br>حد هشدار: ${Number(sh.volumeAlertPct)>0?sh.volumeAlertPct+'٪':'خاموش'}</div>
+      <div class="alert-mini">صف خرید: <b>${sh.inQueue?'در صف':(sh.queueBroken?'شکسته':'—')}</b><br>هشدار شکست: ${sh.queueBreakAlert!==false?'روشن':'خاموش'}</div>
+    </div>
+    <div class="hint" style="margin-top:7px;margin-bottom:14px;">قیمت و اطلاعات صف فقط با زدن دکمه «بروزرسانی قیمت» از BRS API (بورس و فرابورس) دریافت می‌شود. اگر نماد پیدا نشد یا بسته بود، قیمت دستی/قبلی حفظ می‌شود.</div>
+
+    <div class="section-title">اشخاصی که این سهم را دارند</div>
+    <div class="card" style="padding:4px 10px;overflow:auto;">
+      <table><thead><tr><th>شخص</th><th>تعداد</th><th>قیمت خرید</th><th>وضعیت</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button class="btn secondary" style="flex:1;" onclick="openShareForm('${id}')">ویرایش</button>
+      <button class="btn danger" style="flex:1;" onclick="deleteShare('${id}')">حذف</button>
+    </div>
+  `);
+}
+
+function quickUpdatePrice(id){
+  const v = Number($('#qp_price').value);
+  if(!v){ toast('عدد معتبر وارد کنید'); return; }
+  updateRecord('shares', id, {currentPrice:v, priceSource:'manual', updatedAt:Date.now()});
+  toast('قیمت بروزرسانی شد');
+}
+
+function deleteShare(id){
+  if(!confirm('این عرضه اولیه حذف شود؟')) return;
+  deleteRecord('shares', id);
+  closeSheet(); toast('حذف شد');
+}
+
+/* ---------------- BUY ---------------- */
+function openBuyForm(){
+  if(!S.people.length){ toast('اول باید حداقل یک شخص ثبت کنید'); return; }
+  const shareOptions = S.shares.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+  openSheet('ثبت خرید', `
+    <div class="field"><label>عرضه اولیه</label>
+      <select id="b_share">
+        <option value="">— انتخاب کنید —</option>
+        ${shareOptions}
+        <option value="__new__">+ عرضه اولیه جدید</option>
+      </select>
+    </div>
+    <div id="b_newshare" style="display:none;">
+      <div class="field"><label>نام / نماد عرضه اولیه جدید</label><input id="b_newshare_name" placeholder="هر نامی که می‌خواهید"><div class="hint">اگر نام با نماد بورس/فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود.</div></div>
+      <div class="field"><label>قیمت دستی (تومان) — اختیاری</label><input id="b_newshare_price" class="num" inputmode="numeric" placeholder="برای نمادهای بسته"><div class="hint">با بروزرسانی موفق جایگزین می‌شود؛ وگرنه همین قیمت می‌ماند.</div></div>
+    </div>
+
+    <div class="field"><label>درصد سود برای اعلان فروش</label><input id="b_profit_alert" class="num" inputmode="decimal" placeholder="مثلاً 20"><div class="hint">با رسیدن سود فعلی به این درصد، هشدار فروش فعال می‌شود.</div></div>
+    <div class="field"><label>درصد حجم معاملات نسبت به صف خرید برای اعلان فروش</label><input id="b_volume_alert" class="num" inputmode="decimal" placeholder="مثلاً 50"><div class="hint">اگر حجم معاملات ÷ صف خرید × 100 به این عدد برسد یا بیشتر شود، هشدار فروش فعال می‌شود.</div></div>
+
+    <div class="field checkline"><input type="checkbox" id="b_queue_alert" checked><label style="margin:0;" for="b_queue_alert">هشدار شکستن صف خرید</label></div>
+
+    <div class="field-row">
+      <div class="field"><label>قیمت خرید هر واحد (تومان)</label><input id="b_price" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="0"></div>
+      <div class="field"><label>تعداد یکسان برای همه (اختیاری)</label><input id="b_qty" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="مثلاً 100"></div>
+    </div>
+    <div class="field"><label>تاریخ خرید</label><input id="b_date_display" class="jalali-date" readonly onclick="openJalaliPicker('b_date','b_date_display')" placeholder="انتخاب تاریخ"><input id="b_date" type="hidden" value="${todayInput()}"></div>
+
+    <div class="field"><label>اشخاص</label>
+      <div class="card" style="padding:6px 10px;">
+        <table><thead><tr><th style="width:26px;"></th><th>شخص</th><th>تعداد</th><th>قیمت</th></tr></thead>
+        <tbody>${S.people.map(p=>`
+          <tr>
+            <td><input type="checkbox" class="b_check" data-pid="${p.id}" checked></td>
+            <td>${escapeHtml(p.name)}</td>
+            <td><input class="qty-input num b_qty_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
+            <td><input class="price-input num b_price_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
+          </tr>`).join('')}</tbody></table>
+      </div>
+      <div class="hint">عدد «تعداد یکسان» و «قیمت خرید» بالا برای همه ردیف‌ها پر می‌شود؛ هر ردیف را می‌توانید جدا تغییر دهید.</div>
+    </div>
+    <button class="btn block" onclick="submitBuy()">ثبت خرید</button>
+  `);
+  $('#b_share').addEventListener('change', e=>{
+    const isNew=e.target.value==='__new__';
+    $('#b_newshare').style.display=isNew ? 'block':'none';
+    const sh=isNew?null:shareById(e.target.value);
+    if($('#b_profit_alert')) $('#b_profit_alert').value=sh?.profitAlertPct||'';
+    if($('#b_volume_alert')) $('#b_volume_alert').value=sh?.volumeAlertPct||'';
+    if($('#b_queue_alert')) $('#b_queue_alert').checked = sh ? sh.queueBreakAlert!==false : true;
+  });
+}
+function todayInput(){ return new Date().toISOString().slice(0,10); }
+function applyMasterToRows(){
+  const q = $('#b_qty')?.value; const pr = $('#b_price')?.value;
+  if(q) $$('.b_qty_row').forEach(i=>{ if(!i.dataset.touched) i.value=q; });
+  if(pr) $$('.b_price_row').forEach(i=>{ if(!i.dataset.touched) i.value=pr; });
+}
+document.addEventListener('input', e=>{
+  if(e.target.classList && (e.target.classList.contains('b_qty_row')||e.target.classList.contains('b_price_row')||e.target.classList.contains('s_qty_row')||e.target.classList.contains('s_price_row'))){
+    e.target.dataset.touched='1';
+  }
+});
+
+function submitBuy(){
+  let shareId=$('#b_share').value;
+  const date=new Date($('#b_date').value).getTime()||Date.now();
+  const profitAlertPct=Number($('#b_profit_alert').value)||0;
+  const volumeAlertPct=Number($('#b_volume_alert').value)||0;
+  const queueBreakAlert=$('#b_queue_alert').checked;
+  if(shareId==='__new__'){
+    const name=$('#b_newshare_name').value.trim();
+    if(!name){toast('نام عرضه اولیه جدید را وارد کنید');return;}
+    const manual=parsePrice($('#b_newshare_price').value);
+    const rec=addRecord('shares',{name,symbolId:'',symbolCode:'',companyName:'',currentPrice:manual,priceSource:manual?'manual':null,profitAlertPct,volumeAlertPct,queueBreakAlert,marketVolume:0,buyQueueVolume:0,notes:'',createdAt:Date.now(),updatedAt:Date.now()});
+    shareId=rec.id;
+  }else{
+    const sh=shareById(shareId); if(sh) updateRecord('shares',shareId,{profitAlertPct,volumeAlertPct,queueBreakAlert,updatedAt:Date.now()});
+  }
+  if(!shareId){toast('عرضه اولیه را انتخاب کنید');return;}
+  const checks=$$('.b_check:checked'); if(!checks.length){toast('حداقل یک شخص را انتخاب کنید');return;}
+  let count=0;
+  for(const c of checks){
+    const pid=c.dataset.pid,qty=Number($(`.b_qty_row[data-pid="${pid}"]`).value||$('#b_qty').value),price=Number($(`.b_price_row[data-pid="${pid}"]`).value||$('#b_price').value);
+    if(!qty||!price)continue;
+    addRecord('purchases',{shareId,personId:pid,quantity:qty,unitPrice:price,date,status:'open',createdAt:Date.now()});count++;
+  }
+  if(!count){toast('برای هیچ شخصی تعداد/قیمت معتبر وارد نشده');return;}
+  closeSheet();toast(`خرید برای ${count} نفر ثبت شد`);
+}
+
+/* ---------------- SELL ---------------- */
+function openSellForm(){
+  const sharesWithOpen = S.shares.filter(s=> openPurchasesForShare(s.id).length>0);
+  if(!sharesWithOpen.length){ toast('موقعیت بازی برای فروش وجود ندارد'); return; }
+  openSheet('ثبت فروش', `
+    <div class="field"><label>عرضه اولیه</label>
+      <select id="s_share" onchange="renderSellRows()">
+        <option value="">— انتخاب کنید —</option>
+        ${sharesWithOpen.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>قیمت فروش هر واحد (تومان)</label><input id="s_price" class="num" inputmode="numeric" oninput="applyMasterToSellRows()" placeholder="0"></div>
+      <div class="field"><label>تاریخ فروش</label><input id="s_date_display" class="jalali-date" readonly onclick="openJalaliPicker('s_date','s_date_display')" placeholder="انتخاب تاریخ"><input id="s_date" type="hidden" value="${todayInput()}"></div>
+    </div>
+    <div id="s_rows_wrap"></div>
+    <button class="btn block" onclick="submitSell()">ثبت فروش</button>
+  `);
+  initJalaliField('s_date','s_date_display');
+}
+function applyMasterToSellRows(){
+  const pr = $('#s_price')?.value;
+  if(pr) $$('.s_price_row').forEach(i=>{ if(!i.dataset.touched) i.value=pr; });
+}
+function renderSellRows(){
+  const shareId = $('#s_share').value;
+  const wrap = $('#s_rows_wrap');
+  if(!shareId){ wrap.innerHTML=''; return; }
+  const lots = openPurchasesForShare(shareId);
+  wrap.innerHTML = `<div class="field"><label>موقعیت‌های باز</label>
+    <div class="card" style="padding:6px 10px;">
+      <table><thead><tr><th style="width:26px;"></th><th>شخص</th><th>موجودی</th><th>تعداد فروش</th><th>قیمت</th></tr></thead>
+      <tbody>${lots.map(l=>{
+        const per = personById(l.personId);
+        return `<tr>
+          <td><input type="checkbox" class="s_check" data-lot="${l.id}"></td>
+          <td>${per?escapeHtml(per.name):'—'}</td>
+          <td class="num">${fmtNum(l.quantity)}</td>
+          <td><input class="qty-input num s_qty_row" data-lot="${l.id}" data-max="${l.quantity}" inputmode="numeric" placeholder="${l.quantity}"></td>
+          <td><input class="price-input num s_price_row" data-lot="${l.id}" inputmode="numeric" placeholder="—"></td>
+        </tr>`;
+      }).join('')}</tbody></table>
+    </div>
+    <div class="hint">اگر «تعداد فروش» کمتر از موجودی وارد شود، فقط همان مقدار فروخته می‌شود و باقی‌مانده باز می‌ماند.</div>
+  </div>`;
+}
+
+function submitSell(){
+  const shareId = $('#s_share').value;
+  if(!shareId){ toast('عرضه اولیه را انتخاب کنید'); return; }
+  const date = new Date($('#s_date').value).getTime() || Date.now();
+  const checks = $$('.s_check:checked');
+  if(!checks.length){ toast('حداقل یک ردیف را انتخاب کنید'); return; }
+  let count = 0;
+  for(const c of checks){
+    const lotId = c.dataset.lot;
+    const lot = S.purchases.find(p=>p.id===lotId);
+    if(!lot) continue;
+    const qtyInput = $(`.s_qty_row[data-lot="${lotId}"]`);
+    const qty = Number(qtyInput.value || lot.quantity);
+    const price = Number($(`.s_price_row[data-lot="${lotId}"]`).value || $('#s_price').value);
+    if(!qty || !price || qty>lot.quantity) { toast('مقدار یا قیمت نامعتبر در یکی از ردیف‌ها'); continue; }
+
+    addRecord('sales', {
+      shareId, personId:lot.personId, purchaseId:lot.id,
+      quantity:qty, buyPrice:lot.unitPrice, salePrice:price, date, createdAt:Date.now()
+    });
+    if(qty === lot.quantity){
+      updateRecord('purchases', lot.id, {status:'sold', soldAt:date});
+    }else{
+      updateRecord('purchases', lot.id, {quantity: lot.quantity-qty});
+      addRecord('purchases', {
+        shareId, personId:lot.personId, quantity:qty, unitPrice:lot.unitPrice,
+        date:lot.date, status:'sold', soldAt:date, createdAt:Date.now()
+      });
+    }
+    count++;
+  }
+  if(!count) return;
+  closeSheet(); toast('فروش ثبت شد');
+}
+
+/* ---------------- HISTORY ---------------- */
+function renderHistory(){
+  const items = [
+    ...S.purchases.map(p=>({...p, kind:'buy', ts:p.date, price:p.unitPrice})),
+    ...S.sales.map(s=>({...s, kind:'sell', ts:s.date, price:s.salePrice})),
+  ];
+  const f = S.filters;
+  const filtered = items.filter(it=>{
+    if(f.type!=='all' && it.kind!==f.type) return false;
+    if(f.status!=='all'){
+      if(it.kind==='buy' && it.status!==f.status) return false;
+      if(it.kind==='sell' && f.status==='open') return false;
+    }
+    if(f.q){
+      const sh = shareById(it.shareId); const per = personById(it.personId);
+      const hay = ((sh?sh.name:'')+' '+(per?per.name:'')).toLowerCase();
+      if(!hay.includes(f.q.toLowerCase())) return false;
+    }
+    return true;
+  }).sort((a,b)=> (b.ts||0)-(a.ts||0));
+
+  $('#app').innerHTML = `
+    <div class="search-bar">
+      <input id="h_search" placeholder="جست‌وجوی شخص یا عرضه اولیه…" value="${escapeAttr(f.q)}">
+    </div>
+    <div class="chip-row">
+      <button class="chip ${f.type==='all'?'active':''}" onclick="setFilter('type','all')">همه</button>
+      <button class="chip ${f.type==='buy'?'active':''}" onclick="setFilter('type','buy')">خریدها</button>
+      <button class="chip ${f.type==='sell'?'active':''}" onclick="setFilter('type','sell')">فروش‌ها</button>
+      <button class="chip ${f.status==='open'?'active':''}" onclick="setFilter('status', f.status==='open'?'all':'open')">فقط باز</button>
+    </div>
+    ${filtered.length? `<div class="card">${filtered.map(it=>{
+      const sh=shareById(it.shareId); const per=personById(it.personId);
+      return `<div class="row">
+        <div>
+          <div style="font-weight:600;font-size:13.5px;">${sh?escapeHtml(sh.name):'—'} · ${per?escapeHtml(per.name):'—'}</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${fmtDate(it.ts)} · ${fmtNum(it.quantity)} واحد × ${fmtNum(it.price)}</div>
+        </div>
+        <span class="pill ${it.kind==='buy'?'accent':'pos'}">${it.kind==='buy'?'خرید':'فروش'}</span>
+      </div>`;
+    }).join('')}</div>` : emptyBlock('چیزی یافت نشد', 'فیلتر یا عبارت جست‌وجو را تغییر دهید.')}
+  `;
+  $('#h_search').addEventListener('input', e=>{ S.filters.q=e.target.value; renderHistory(); });
+  const el=$('#h_search'); el.focus(); el.selectionStart=el.selectionEnd=el.value.length;
+}
+function setFilter(k,v){ S.filters[k]=v; renderHistory(); }
+
+/* ---------------- REPORTS ---------------- */
+let chartRef=null;
+function renderReports(){
+  const st = overallStats();
+  const perShare = S.shares.map(s=>({share:s, stats:shareStats(s.id)})).sort((a,b)=>b.stats.profit-a.stats.profit);
+  $('#app').innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="lbl">مجموع سرمایه‌گذاری</div><div class="val">${fmtToman(st.invested)}</div></div>
+      <div class="stat"><div class="lbl">مجموع فروش</div><div class="val">${fmtToman(st.revenue)}</div></div>
+      <div class="stat"><div class="lbl">سود خالص</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
+      <div class="stat"><div class="lbl">درصد سود کلی</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
+    </div>
+    <div class="section-title">جزئیات</div>
+    ${perShare.length? `<div class="card" style="padding:4px 10px;overflow:auto;">
+      <table><thead><tr><th>عرضه اولیه</th><th>سرمایه</th><th>سود</th><th>درصد</th></tr></thead>
+      <tbody>${perShare.map(x=>`<tr>
+        <td>${escapeHtml(x.share.name)}</td>
+        <td class="num">${fmtNum(x.stats.invested)}</td>
+        <td class="num" style="color:${x.stats.profit>=0?'var(--pos)':'var(--neg)'}">${fmtNum(x.stats.profit)}</td>
+        <td class="num" style="color:${x.stats.profitPct>=0?'var(--pos)':'var(--neg)'}">${x.stats.profitPct.toFixed(1)}٪</td>
+      </tr>`).join('')}</tbody></table>
+    </div>` : emptyBlock('داده‌ای برای گزارش نیست','بعد از ثبت اولین خرید و فروش، گزارش کامل می‌شود.')}
+  `;
+}
+
+/* ---------------- settings / sheet plumbing ---------------- */
+function openSettings(){
+  openSheet('تنظیمات', `
+    <div class="field"><label>توکن BRS API</label><input id="st_api_key" type="text" value="${escapeAttr(S.apiKey||'')}" placeholder="توکن دریافتی از brs.api"><div class="api-status">برای استعلام قیمت از AllSymbols استفاده می‌شود. توکن فقط در حافظه همین برنامه ذخیره می‌شود.</div></div>
+    <div class="field"><label>آدرس API</label><input id="st_api_url" value="${escapeAttr(S.apiEndpoint||'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php')}"><div class="api-status">آدرس پیش‌فرض همان AllSymbols.php است و نوع درخواست روی type=1 قرار می‌گیرد.</div></div>
+    <button class="btn block" onclick="saveApiSettings()">ذخیره تنظیمات API</button>
+    <div class="banner info" style="margin-top:12px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <div>به‌طور پیش‌فرض قیمت‌ها فقط با زدن «بروزرسانی قیمت‌ها» (یا کشیدن صفحه به پایین) دریافت می‌شوند. پاسخ فقط برای عرضه‌های موجود در پرتفوی استفاده می‌شود.</div>
+    </div>
+    <div class="section-title" style="margin-top:18px;">اعلان‌ها و بروزرسانی خودکار</div>
+    <div class="card backup-card">
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">اعلان هشدار فروش</div><div class="hint">وضعیت: <span id="st_notif_status">${notifStatusText()}</span></div></div>
+      <button class="btn secondary sm" onclick="requestSaleNotifications()">فعال‌سازی</button>
+    </div>
+    <div class="field" style="margin-top:10px;"><label>بروزرسانی خودکار قیمت (فقط وقتی برنامه باز است)</label>
+      <select id="st_auto" onchange="S.autoRefreshMin=Number(this.value)||0; saveLocal(); setupAutoRefresh(); toast(S.autoRefreshMin?'بروزرسانی خودکار روشن شد':'بروزرسانی خودکار خاموش شد')">
+        ${[[0,'خاموش'],[1,'هر ۱ دقیقه'],[2,'هر ۲ دقیقه'],[5,'هر ۵ دقیقه']].map(([v,l])=>`<option value="${v}" ${Number(S.autoRefreshMin||0)===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <div class="hint">هر بروزرسانی یک درخواست به API است؛ مراقب سقف درخواست پلن خودت باش. اگر برنامه بسته یا در پس‌زمینه باشد، بروزرسانی و اعلانی انجام نمی‌شود.</div>
+    </div>
+    <div class="field checkline">
+      <input type="checkbox" id="st_reveal" ${S.revealSensitive?'checked':''} onchange="S.revealSensitive=this.checked; render();">
+      <label style="margin:0;" for="st_reveal">نمایش کامل کد ملی، شماره کارت و CVV2 (به‌صورت پیش‌فرض پنهان است)</label>
+    </div>
+    <div class="section-title" style="margin-top:18px;">پشتیبان‌گیری و انتقال اطلاعات</div>
+    <div class="card backup-card">
+      <div class="backup-icon">↥</div><div style="flex:1;"><div style="font-weight:700;font-size:14px;">ذخیره پشتیبان</div><div class="hint">تمام اشخاص، معاملات، واریز و برداشت و تنظیمات در یک فایل ذخیره می‌شود.</div></div>
+      <button class="btn secondary sm" onclick="exportData()">دانلود</button>
+    </div>
+    <div class="card backup-card">
+      <div class="backup-icon">↧</div><div style="flex:1;"><div style="font-weight:700;font-size:14px;">بازیابی پشتیبان</div><div class="hint">فایل پشتیبان را از گوشی یا رایانه دیگر انتخاب کنید.</div></div>
+      <button class="btn secondary sm" onclick="$('#importFile').click()">انتخاب فایل</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(this.files[0])">
+  `);
+}
+function saveApiSettings(){
+  S.apiKey=$('#st_api_key').value.trim();
+  S.apiEndpoint=$('#st_api_url').value.trim() || 'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php';
+  saveLocal(); closeSheet(); toast('تنظیمات API ذخیره شد');
+}
+
+
+function exportData(){
+  const blob = new Blob([JSON.stringify({version:2,exportedAt:Date.now(),people:S.people,shares:S.shares,purchases:S.purchases,sales:S.sales,cashTransactions:S.cashTransactions,apiKey:S.apiKey,apiEndpoint:S.apiEndpoint}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'sahm-ledger-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  toast('فایل پشتیبان دانلود شد');
+}
+function importData(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!confirm('اطلاعات فعلی با محتوای این فایل جایگزین شود؟')) return;
+      S.people = data.people||[]; S.shares = data.shares||[];
+      S.purchases = data.purchases||[]; S.sales = data.sales||[]; S.cashTransactions = data.cashTransactions||[];
+      S.apiKey=data.apiKey||S.apiKey||'';
+      S.apiEndpoint=data.apiEndpoint||S.apiEndpoint||'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php';
+      saveLocal(); closeSheet(); toast('بازیابی شد');
+    }catch(e){ toast('فایل معتبر نیست'); }
+  };
+  reader.readAsText(file);
+}
+
+function openSheet(title, bodyHtml){
+  if($('#ovSheet')) $('#ovSheet').remove();
+  if(NAV_READY && !SHEET_HISTORY){ history.pushState({sahm:true,sheet:true,view:S.view},'',location.href); SHEET_HISTORY=true; }
+  const ov = document.createElement('div');
+  ov.className='overlay'; ov.id='ovSheet';
+  ov.onclick = (e)=>{ if(e.target===ov) closeSheet(); };
+  ov.innerHTML = `<div class="sheet">
+    <div class="sheet-head"><h2>${title}</h2>
+      <button class="icon-btn" onclick="closeSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    ${bodyHtml}
+  </div>`;
+  document.body.appendChild(ov);
+}
+function closeSheet(skipHistory=false){ const ov=$('#ovSheet'); if(ov) ov.remove(); if(SHEET_HISTORY){ SHEET_HISTORY=false; if(!skipHistory && NAV_READY){ INTERNAL_POP=true; history.back(); } } }
+
+function emptyBlock(t,d){
+  return `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"/></svg><div class="t">${t}</div><div class="d">${d}</div></div>`;
+}
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+
+/* ---------------- JALALI DATE PICKER / CASH LEDGER ---------------- */
+const JMONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+function g2j(gy,gm,gd){
+  const gdm=[0,31,59,90,120,151,181,212,243,273,304,334], gy2=gm>2?gy+1:gy;
+  let days=355666+365*gy+Math.floor((gy2+3)/4)-Math.floor((gy2+99)/100)+Math.floor((gy2+399)/400)+gd+gdm[gm-1];
+  let jy=-1597+33*Math.floor(days/12053); days%=12053; jy+=4*Math.floor(days/1461); days%=1461;
+  if(days>365){jy+=Math.floor((days-1)/365);days=(days-1)%365;}
+  const jm=days<186?1+Math.floor(days/31):7+Math.floor((days-186)/30), jd=1+(days<186?days%31:(days-186)%30); return [jy,jm,jd];
+}
+function j2g(jy,jm,jd){
+  let jy2=jy+1597, days=-355668+365*jy2+Math.floor(jy2/33)*8+Math.floor(((jy2%33)+3)/4)+jd+(jm<7?(jm-1)*31:(jm-7)*30+186);
+  let gy=400*Math.floor(days/146097); days%=146097; if(days>36524){gy+=100*Math.floor(--days/36524);days%=36524;if(days>=365)days++;}
+  gy+=4*Math.floor(days/1461); days%=1461; if(days>365){gy+=Math.floor((days-1)/365);days=(days-1)%365;}
+  const gd=days+1, leap=(gy%4===0&&gy%100!==0)||gy%400===0, md=[0,31,leap?29:28,31,30,31,30,31,31,30,31,30,31]; let gm=1; while(gd>md[gm]){days-=md[gm];gm++;} return [gy,gm,gd];
+}
+function jDays(y,m){ if(m<=6)return 31; if(m<=11)return 30; return (new Date(j2g(y,12,1)[0],j2g(y,12,1)[1]-1,j2g(y,12,1)[2]).getTime()===new Date(j2g(y+1,1,1)[0],j2g(y+1,1,1)[1]-1,j2g(y+1,1,1)[2]).getTime()-30*86400000)?30:29; }
+function gregToJString(iso){const [y,m,d]=iso.split('-').map(Number),j=g2j(y,m,d);return `${j[0]}/${String(j[1]).padStart(2,'0')}/${String(j[2]).padStart(2,'0')}`;}
+function jalaliToIso(y,m,d){const g=j2g(y,m,d);return `${g[0]}-${String(g[1]).padStart(2,'0')}-${String(g[2]).padStart(2,'0')}`;}
+function initJalaliField(hiddenId,displayId){const h=$('#'+hiddenId),d=$('#'+displayId);if(!h||!d)return; if(!h.value)h.value=todayInput(); d.value=gregToJString(h.value);}
+let JCAL={hy:0,hm:0,hidden:'',display:''};
+function openJalaliPicker(hiddenId,displayId){const h=$('#'+hiddenId);if(!h)return;const j=g2j(...h.value.split('-').map(Number));JCAL={hy:j[0],hm:j[1],hidden:hiddenId,display:displayId};renderJalaliPicker();}
+function renderJalaliPicker(){
+  let ov=$('#jalaliPicker');if(!ov){ov=document.createElement('div');ov.id='jalaliPicker';ov.className='jalali-picker';document.body.appendChild(ov);} const now=g2j(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate()); const selected=$('#'+JCAL.hidden)?.value; const sj=selected?g2j(...selected.split('-').map(Number)):[];
+  const firstIso=jalaliToIso(JCAL.hy,JCAL.hm,1), wd=(new Date(firstIso+'T00:00:00').getDay()+1)%7; let days=''; for(let i=0;i<wd;i++)days+='<div></div>'; for(let d=1;d<=jDays(JCAL.hy,JCAL.hm);d++){const iso=jalaliToIso(JCAL.hy,JCAL.hm,d);const cls=(JCAL.hy===now[0]&&JCAL.hm===now[1]&&d===now[2]?' today':'')+(sj.length&&JCAL.hy===sj[0]&&JCAL.hm===sj[1]&&d===sj[2]?' selected':'');days+=`<button class="jcal-day${cls}" onclick="pickJalali(${JCAL.hy},${JCAL.hm},${d})">${d}</button>`;}
+  ov.innerHTML=`<div class="jcal" onclick="event.stopPropagation()"><div class="jcal-head"><button class="jcal-nav" onclick="moveJalali(-1)">‹</button><div class="jcal-title">${JMONTHS[JCAL.hm-1]} ${JCAL.hy}</div><button class="jcal-nav" onclick="moveJalali(1)">›</button></div><div class="jcal-week"><div>شنبه</div><div>یکشنبه</div><div>دوشنبه</div><div>سه‌شنبه</div><div>چهارشنبه</div><div>پنجشنبه</div><div>جمعه</div></div><div class="jcal-days">${days}</div><button class="btn secondary block" style="margin-top:10px;" onclick="closeJalaliPicker()">انصراف</button></div>`;
+  ov.onclick=closeJalaliPicker;
+}
+function moveJalali(n){JCAL.hm+=n;if(JCAL.hm>12){JCAL.hm=1;JCAL.hy++;}if(JCAL.hm<1){JCAL.hm=12;JCAL.hy--;}renderJalaliPicker();}
+function pickJalali(y,m,d){const iso=jalaliToIso(y,m,d),h=$('#'+JCAL.hidden),disp=$('#'+JCAL.display);if(h)h.value=iso;if(disp)disp.value=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;closeJalaliPicker();}
+function closeJalaliPicker(){const ov=$('#jalaliPicker');if(ov)ov.remove();}
+function copyText(v){const t=String(v||'').replace(/\s/g,'');if(!t)return;navigator.clipboard?.writeText(t).then(()=>toast('شماره کارت کپی شد')).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove();toast('شماره کارت کپی شد');});}
+function cashForPerson(pid){let cash=0;S.cashTransactions.forEach(x=>{if(x.personId===pid)cash+=(x.type==='deposit'?1:-1)*Number(x.amount||0);});S.purchases.filter(x=>x.personId===pid).forEach(x=>cash-=Number(x.quantity||0)*Number(x.unitPrice||0));S.sales.filter(x=>x.personId===pid).forEach(x=>cash+=Number(x.quantity||0)*Number(x.salePrice||0));return cash;}
+function sharesValueForPerson(pid){return S.purchases.filter(x=>x.personId===pid&&x.status==='open').reduce((a,x)=>{const sh=shareById(x.shareId);return a+Number(x.quantity||0)*Number(sh?.currentPrice||x.unitPrice||0);},0);}
+function personBalance(pid){const cash=cashForPerson(pid),shares=sharesValueForPerson(pid),total=cash+shares,net=S.cashTransactions.filter(x=>x.personId===pid).reduce((a,x)=>a+(x.type==='deposit'?1:-1)*Number(x.amount||0),0),pl=total-net;return {cash,shares,total,pl,net};}
+function openCashForm(){
+ if(!S.people.length){toast('اول باید حداقل یک شخص ثبت کنید');return;}
+ openSheet('ثبت واریز / برداشت',`<div class="field-row"><div class="field"><label>نوع عملیات</label><select id="c_type"><option value="deposit">واریز</option><option value="withdraw">برداشت</option></select></div><div class="field"><label>تاریخ</label><input id="c_date_display" class="jalali-date" readonly onclick="openJalaliPicker('c_date','c_date_display')"><input id="c_date" type="hidden" value="${todayInput()}"></div></div><div class="field"><label>مبلغ یکسان برای همه (تومان)</label><input id="c_amount" class="num" inputmode="numeric" oninput="applyCashMaster()" placeholder="مثلاً 10,000,000"></div><div class="field"><label>اشخاص</label><div class="card" style="padding:6px 10px;overflow:auto;"><table><thead><tr><th></th><th>شخص</th><th>مبلغ</th></tr></thead><tbody>${S.people.map(p=>`<tr><td><input type="checkbox" class="c_check" data-pid="${p.id}" checked></td><td>${escapeHtml(p.name)}</td><td><input class="price-input num c_amount_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td></tr>`).join('')}</tbody></table></div></div><div class="hint">مبلغ اصلی برای همه اعمال می‌شود؛ در هر ردیف می‌توانید مبلغ همان شخص را تغییر دهید.</div><button class="btn block" onclick="submitCash()">ثبت عملیات</button>`);initJalaliField('c_date','c_date_display');
+}
+function applyCashMaster(){const v=$('#c_amount')?.value;if(v)$$('.c_amount_row').forEach(x=>{if(!x.dataset.touched)x.value=v;});}
+document.addEventListener('input',e=>{if(e.target.classList?.contains('c_amount_row'))e.target.dataset.touched='1';});
+function submitCash(){const type=$('#c_type').value,date=new Date($('#c_date').value).getTime()||Date.now(),checks=$$('.c_check:checked');let count=0;for(const c of checks){const amount=Number($(`.c_amount_row[data-pid="${c.dataset.pid}"]`).value||$('#c_amount').value);if(!amount||amount<0)continue;addRecord('cashTransactions',{personId:c.dataset.pid,type,amount,date,createdAt:Date.now()});count++;}if(!count){toast('برای هیچ شخصی مبلغ معتبر وارد نشده');return;}closeSheet();toast(`${type==='deposit'?'واریز':'برداشت'} برای ${count} نفر ثبت شد`);}
+function renderCash(){
+ const totals=S.people.reduce((a,p)=>{const b=personBalance(p.id);a.cash+=b.cash;a.shares+=b.shares;a.total+=b.total;return a;},{cash:0,shares:0,total:0});
+ $('#app').innerHTML=`<div class="section-title">موجودی اشخاص</div><div class="cash-summary"><div class="stat"><div class="lbl">نقدینگی</div><div class="val">${fmtToman(totals.cash)}</div></div><div class="stat"><div class="lbl">ارزش سهام</div><div class="val">${fmtToman(totals.shares)}</div></div><div class="stat"><div class="lbl">کل موجودی</div><div class="val">${fmtToman(totals.total)}</div></div></div><div class="refresh-row"><div class="section-title" style="margin:0;">تفکیک اشخاص</div><button class="btn secondary sm" onclick="openCashForm()">ثبت جدید</button></div><div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>شخص</th><th>نقدینگی</th><th>سهام</th><th>کل</th><th>سود/زیان</th></tr></thead><tbody>${S.people.map(p=>{const b=personBalance(p.id);return `<tr><td>${escapeHtml(p.name)}</td><td class="num">${fmtNum(b.cash)}</td><td class="num">${fmtNum(b.shares)}</td><td class="num"><b>${fmtNum(b.total)}</b></td><td class="num" style="color:${b.pl>=0?'var(--pos)':'var(--neg)'}">${fmtNum(b.pl)}</td></tr>`;}).join('')}</tbody></table></div><div class="section-title">آخرین واریز و برداشت</div>${S.cashTransactions.length?`<div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>شخص</th><th>نوع</th><th>مبلغ</th><th>تاریخ</th></tr></thead><tbody>${[...S.cashTransactions].sort((a,b)=>(b.date||0)-(a.date||0)).map(x=>{const p=personById(x.personId);return `<tr><td>${p?escapeHtml(p.name):'—'}</td><td><span class="pill ${x.type==='deposit'?'pos':'neg'}">${x.type==='deposit'?'واریز':'برداشت'}</span></td><td class="num">${fmtNum(x.amount)}</td><td>${fmtDate(x.date)}</td></tr>`}).join('')}</tbody></table></div>`:emptyBlock('هنوز تراکنش نقدی ثبت نشده','برای ثبت گروهی واریز یا برداشت روی «ثبت جدید» بزنید.')}`;
+}
+
+initNavHistory();
+init();
+setupAutoRefresh();
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
