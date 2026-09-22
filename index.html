@@ -196,6 +196,7 @@ tr:last-child td{border-bottom:none;}
 .symbol-match.ok{border-color:var(--pos);background:var(--pos-soft);}
 .symbol-match.warn{border-color:var(--accent);background:var(--accent-soft);}
 .alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.sale-alert-group{position:absolute;left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:5px;z-index:3;white-space:nowrap;} .sale-alert-group .pill{display:inline-flex;align-items:center;gap:4px;}
 .alert-mini{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:11.5px;line-height:1.8;}
 .refresh-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 10px;}
 @media(max-width:420px){.alert-grid{grid-template-columns:1fr;}}
@@ -253,8 +254,14 @@ tr:last-child td{border-bottom:none;}
 const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const uid4 = ()=>Math.random().toString(36).slice(2,10);
-const fmtNum = n => (n===null||n===undefined||isNaN(n)) ? '—' : Number(n).toLocaleString('en-US');
-const fmtToman = n => fmtNum(n) + ' تومان';
+const fmtNum = n => (n===null||n===undefined||isNaN(n)) ? '—' : Math.round(Number(n)).toLocaleString('en-US');
+const fmtToman = n => fmtNum(n) + ' ریال';
+// کارمزد ثابت معاملات بورس؛ برای ارزش روز فقط کارمزد فروش کسر می‌شود و قیمت خام API دست‌کاری نمی‌شود.
+const BUY_FEE_RATE = 0.003712;
+const SELL_FEE_RATE = 0.0088;
+const netSellValue = (gross)=>Number(gross||0)*(1-SELL_FEE_RATE);
+const buyCostWithFee = (gross)=>Number(gross||0)*(1+BUY_FEE_RATE);
+
 const fmtDate = ts => { if(!ts) return '—'; const d=new Date(ts); return d.toLocaleDateString('fa-IR',{year:'numeric',month:'2-digit',day:'2-digit'}); };
 const fmtDateTime = ts => { if(!ts) return '—'; const d=new Date(ts); return d.toLocaleDateString('fa-IR',{month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}); };
 function toast(msg){
@@ -275,7 +282,7 @@ const S = {
   people:[], shares:[], purchases:[], sales:[], cashTransactions:[],
   view:'dashboard', revealSensitive:false, expandedShareId:null,
   apiKey:'', apiEndpoint:'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php',
-  filters:{ q:'', type:'all', status:'all' },
+  filters:{ q:'', type:'all', status:'all' }, dashboardPeriod:'current', reportPeriod:'all',
 };
 
 const STORAGE_KEY = 'sahm_ledger_v1';
@@ -378,12 +385,12 @@ function shareStats(shareId){
   const purchases = purchasesForShare(shareId);
   let invested=0, openQty=0, openCost=0, soldQty=0, soldCost=0, revenue=0;
   purchases.forEach(p=>{
-    const cost = p.quantity*p.unitPrice;
+    const cost = buyCostWithFee(p.quantity*p.unitPrice);
     invested += cost;
     if(p.status==='open'){ openQty+=p.quantity; openCost+=cost; }
   });
   S.sales.filter(s=>s.shareId===shareId).forEach(s=>{
-    soldQty += s.quantity; soldCost += s.quantity*s.buyPrice; revenue += s.quantity*s.salePrice;
+    soldQty += s.quantity; soldCost += buyCostWithFee(s.quantity*s.buyPrice); revenue += netSellValue(s.quantity*s.salePrice);
   });
   const profit = revenue - soldCost;
   const profitPct = soldCost>0 ? (profit/soldCost*100) : 0;
@@ -392,8 +399,8 @@ function shareStats(shareId){
 
 function overallStats(){
   let invested=0, revenue=0, soldCost=0, openCost=0;
-  S.purchases.forEach(p=>{ const c=p.quantity*p.unitPrice; invested+=c; if(p.status==='open') openCost+=c; });
-  S.sales.forEach(s=>{ revenue += s.quantity*s.salePrice; soldCost += s.quantity*s.buyPrice; });
+  S.purchases.forEach(p=>{ const c=buyCostWithFee(p.quantity*p.unitPrice); invested+=c; if(p.status==='open') openCost+=c; });
+  S.sales.forEach(s=>{ revenue += netSellValue(s.quantity*s.salePrice); soldCost += buyCostWithFee(s.quantity*s.buyPrice); });
   const profit = revenue - soldCost;
   const profitPct = soldCost>0 ? (profit/soldCost*100) : 0;
   return {invested, revenue, soldCost, openCost, profit, profitPct, shareCount:S.shares.length, peopleCount:S.people.length};
@@ -471,20 +478,9 @@ window.addEventListener('popstate',()=>{
   setTimeout(()=>{ try{ if(!document.hidden) history.back(); }catch(e){} },120);
 });
 
+
+/* Tab switching is intentional: tabs open/close only by selecting the tab itself. */
 let SWIPE={x:0,y:0,t:0,active:false};
-document.addEventListener('touchstart',e=>{
-  if(e.touches.length!==1) return;
-  if($('#ovSheet')||$('#jalaliPicker')) return;
-  const t=e.target; if(t.closest('input,textarea,select,button,a,[contenteditable="true"]')) return;
-  const p=e.touches[0]; SWIPE={x:p.clientX,y:p.clientY,t:Date.now(),active:true};
-},{passive:true});
-document.addEventListener('touchend',e=>{
-  if(!SWIPE.active) return;
-  const p=e.changedTouches[0], dx=p.clientX-SWIPE.x, dy=p.clientY-SWIPE.y, dt=Date.now()-SWIPE.t; SWIPE.active=false;
-  if(dt>650 || Math.abs(dx)<55 || Math.abs(dx)<Math.abs(dy)*1.25) return;
-  // finger left => next tab; finger right => previous tab.
-  navigateTab(dx<0?1:-1);
-},{passive:true});
 
 /* ---------------- CUSTOM PULL TO REFRESH ---------------- */
 let PULL={x:0,y:0,active:false,triggered:false};
@@ -685,10 +681,10 @@ function portfolioList(){
     const opens = S.purchases.filter(p=>p.shareId===sh.id && p.status==='open');
     if(!opens.length) return null;
     const holderIds = [...new Set(opens.map(p=>p.personId))];
-    const cost = opens.reduce((a,p)=>a+p.quantity*p.unitPrice,0);
+    const cost = opens.reduce((a,p)=>a+buyCostWithFee(p.quantity*p.unitPrice),0);
     const qty = opens.reduce((a,p)=>a+p.quantity,0);
     const hasPrice = sh.currentPrice!=null && sh.currentPrice!=='';
-    const value = hasPrice ? qty*sh.currentPrice : null;
+    const value = hasPrice ? netSellValue(qty*sh.currentPrice) : null;
     const profit = hasPrice ? value-cost : null;
     const profitPct = (hasPrice && cost>0) ? (profit/cost*100) : null;
     return {share:sh, holderIds, cost, qty, value, profit, profitPct, opens};
@@ -709,8 +705,8 @@ function renderPortfolioCard(item){
     const per = personById(pid);
     const rowsForPerson = opens.filter(p=>p.personId===pid);
     const pQty = rowsForPerson.reduce((a,p)=>a+p.quantity,0);
-    const pCost = rowsForPerson.reduce((a,p)=>a+p.quantity*p.unitPrice,0);
-    const pValue = share.currentPrice ? pQty*share.currentPrice : null;
+    const pCost = rowsForPerson.reduce((a,p)=>a+buyCostWithFee(p.quantity*p.unitPrice),0);
+    const pValue = share.currentPrice ? netSellValue(pQty*share.currentPrice) : null;
     const pProfit = pValue!=null ? pValue-pCost : null;
     return `<button class="row" style="width:100%;background:none;text-align:right;padding:10px 12px;" onclick="event.stopPropagation(); openPersonDetail('${pid}')">
       <div>
@@ -722,7 +718,7 @@ function renderPortfolioCard(item){
   }).join('');
 
   return `<div class="card" style="margin-bottom:10px;">
-    <button class="row" style="width:100%;background:none;text-align:right;align-items:flex-start;" onclick="togglePortfolioExpand('${share.id}')">
+    <button class="row" style="width:100%;background:none;text-align:right;align-items:flex-start;position:relative;" onclick="togglePortfolioExpand('${share.id}')">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2" style="margin-top:3px;transform:rotate(${expanded?'90':'0'}deg);transition:transform .15s;"><path d="M9 6l6 6-6 6"/></svg>
         <div>
@@ -731,29 +727,75 @@ function renderPortfolioCard(item){
         </div>
       </div>
       <div style="text-align:left;flex:none;">
-        <div class="pill ${alertLabel(share)?'neg':(profitPct==null?'muted':(profitPct>=0?'pos':'neg'))}">${alertLabel(share)|| (profitPct==null?'بدون قیمت روز':profitPct.toFixed(1)+'٪')}</div>
+        <div class="pill ${profitPct==null?'muted':(profitPct>=0?'pos':'neg')}" style="min-width:54px;">${profitPct==null?'بدون قیمت روز':Math.round(profitPct)+'٪'}</div>${alertLabel(share)?`<span class="sale-alert-group"><span class="pill neg">${alertLabel(share)} ⚠</span></span>`:''}
         <div style="font-size:12.5px;margin-top:6px;font-weight:700;color:${profitColor};">${profit==null?'—':fmtToman(profit)}</div>
-        ${share.currentPrice?`<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">قیمت ${fmtNum(share.currentPrice)}${share.priceSource==='manual'?' (دستی)':''} · حجم/صف ${alertInfo.volumeToQueuePct==null?'—':alertInfo.volumeToQueuePct.toFixed(0)+'٪'}</div>`:''}
+        ${share.currentPrice?`<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">قیمت ${fmtNum(share.currentPrice)}${share.priceSource==='manual'?' (دستی)':''} · حجم/صف ${alertInfo.volumeToQueuePct==null?'—':Math.round(alertInfo.volumeToQueuePct)+'٪'}</div>`:''}
       </div>
     </button>
     ${expanded? `<div style="border-top:1px solid var(--line);">${holdersRows}</div>` : ''}
   </div>`;
 }
 
+function monthKey(ts){
+  if(!ts) return '';
+  const d=new Date(ts); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  return `${j[0]}-${String(j[1]).padStart(2,'0')}`;
+}
+function currentJalaliMonthKey(){ return monthKey(Date.now()); }
+function monthLabel(key){
+  const [y,m]=String(key||'').split('-').map(Number);
+  return y&&m ? `${JMONTHS[m-1]} ${y}` : '—';
+}
+function statsForPeriod(key){
+  const all=!key || key==='all';
+  let invested=0,revenue=0,soldCost=0,openCost=0;
+  S.purchases.forEach(p=>{
+    if(all || monthKey(p.date)===key){
+      const c=buyCostWithFee(Number(p.quantity||0)*Number(p.unitPrice||0)); invested+=c;
+      if(p.status==='open' && (all || monthKey(Date.now())===key)) openCost+=c;
+    }
+  });
+  S.sales.forEach(s=>{
+    if(all || monthKey(s.date)===key){ revenue+=netSellValue(Number(s.quantity||0)*Number(s.salePrice||0)); soldCost+=buyCostWithFee(Number(s.quantity||0)*Number(s.buyPrice||0)); }
+  });
+  const profit=revenue-soldCost;
+  const profitPct=soldCost>0?profit/soldCost*100:0;
+  return {invested,revenue,soldCost,openCost,profit,profitPct};
+}
+function availableReportMonths(){
+  const set=new Set();
+  S.purchases.forEach(x=>{const k=monthKey(x.date);if(k)set.add(k);});
+  S.sales.forEach(x=>{const k=monthKey(x.date);if(k)set.add(k);});
+  const cur=currentJalaliMonthKey(); if(cur)set.add(cur);
+  return [...set].sort((a,b)=>a.localeCompare(b));
+}
+function renderPeriodToggle(selected, targetFn){
+  return `<div class="chip-row" style="margin-top:12px;">
+    <button class="chip ${selected==='current'?'active':''}" onclick="${targetFn}('current')">ماه جاری</button>
+    <button class="chip ${selected==='all'?'active':''}" onclick="${targetFn}('all')">کل / تجمعی</button>
+  </div>`;
+}
+
+function setDashboardPeriod(v){S.dashboardPeriod=v;renderDashboard();}
+
 function renderDashboard(){
   const st = overallStats();
   const alerts = saleAlertShares();
   const portfolio = portfolioList();
+  const period = S.dashboardPeriod||'current';
+  const pst = statsForPeriod(period==='current'?currentJalaliMonthKey():'all');
 
   $('#app').innerHTML = `
     ${alerts.length? `<div class="banner info">
       <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
       <div>${alerts.length} عرضه اولیه به نقطه خروج تعریف‌شده رسیده‌اند: ${alerts.map(a=>a.name).join('، ')}</div>
     </div>` : ''}
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">نمایش: <b>${period==='current'?'ماه جاری':'کل / تجمعی'}</b></div>
+    ${renderPeriodToggle(period,'setDashboardPeriod')}
     <div class="stats">
-      <div class="stat"><div class="lbl">سود خالص (فروش‌شده)</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
-      <div class="stat"><div class="lbl">درصد سود (فروش‌شده)</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
-      <div class="stat"><div class="lbl">سرمایه در گردش (باز)</div><div class="val">${fmtToman(st.openCost)}</div></div>
+      <div class="stat"><div class="lbl">سود خالص (فروش‌شده)</div><div class="val ${pst.profit>=0?'pos':'neg'}">${fmtToman(pst.profit)}</div></div>
+      <div class="stat"><div class="lbl">درصد سود (فروش‌شده)</div><div class="val ${pst.profitPct>=0?'pos':'neg'}">${pst.profitPct.toFixed(1)}٪</div></div>
+      <div class="stat"><div class="lbl">سرمایه‌گذاری</div><div class="val">${fmtToman(pst.invested)}</div></div>
       <div class="stat"><div class="lbl">تعداد اشخاص / عرضه اولیه‌ها</div><div class="val">${st.peopleCount} / ${st.shareCount}</div></div>
     </div>
 
@@ -937,7 +979,7 @@ function openShareForm(id){
   const sh = id ? shareById(id) : null;
   openSheet(sh?'ویرایش عرضه اولیه':'عرضه اولیه جدید', `
     <div class="field"><label>نام / نماد *</label><input id="f_sname" value="${sh?escapeAttr(sh.name):''}" placeholder="هر نامی؛ برای بروزرسانی خودکار، نماد دقیق بورس/فرابورس"><div class="hint">اگر نام دقیقاً با یک نماد بورس یا فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود؛ وگرنه فقط قیمت دستی استفاده می‌شود.</div></div>
-    <div class="field"><label>قیمت دستی (تومان) — اختیاری</label><input id="f_price" class="num" inputmode="numeric" value="${sh?sh.currentPrice||'':''}" placeholder="مثلاً 12500"><div class="hint">برای نمادهای بسته که API قیمت نمی‌دهد. اگر بروزرسانی موفق باشد جایگزین می‌شود، در غیر این صورت همین قیمت می‌ماند.</div></div>
+    <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="f_price" class="num" inputmode="numeric" value="${sh?sh.currentPrice||'':''}" placeholder="مثلاً 12500"><div class="hint">برای نمادهای بسته که API قیمت نمی‌دهد. اگر بروزرسانی موفق باشد جایگزین می‌شود، در غیر این صورت همین قیمت می‌ماند.</div></div>
     <div class="field"><label>درصد سود برای اعلان فروش</label><input id="f_profit_alert" class="num" inputmode="decimal" value="${sh?sh.profitAlertPct||'':''}" placeholder="مثلاً 20"><div class="hint">اگر سود فعلی نسبت به میانگین قیمت خرید به این درصد برسد، هشدار فروش فعال می‌شود.</div></div>
     <div class="field"><label>درصد حجم معاملات نسبت به صف خرید برای اعلان فروش</label><input id="f_volume_alert" class="num" inputmode="decimal" value="${sh?sh.volumeAlertPct||'':''}" placeholder="مثلاً 50"><div class="hint">حجم معاملات روز ÷ حجم صف خرید × 100. فقط وقتی سهم در صف خرید (قیمت سطر اول خرید = آستانه مجاز بالا) باشد محاسبه می‌شود.</div></div>
     <div class="field checkline"><input type="checkbox" id="f_queue_alert" ${(!sh||sh.queueBreakAlert!==false)?'checked':''}><label style="margin:0;" for="f_queue_alert">هشدار شکستن صف خرید</label></div>
@@ -987,13 +1029,13 @@ function openShareDetail(id){
     </div>
 
     <div class="field-row" style="margin-top:16px;">
-      <div class="field"><label>قیمت روز (تومان)</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${sh.currentPrice?fmtToman(sh.currentPrice):'ثبت نشده'}</div></div>
+      <div class="field"><label>قیمت روز (ریال)</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${sh.currentPrice?fmtToman(sh.currentPrice):'ثبت نشده'}</div></div>
       <div class="field" style="flex:0 0 auto;align-self:flex-end;"><button class="btn secondary" onclick="refreshPrices()">بروزرسانی قیمت</button></div>
     </div>
     <div class="api-status">منبع قیمت: <b>${sh.priceSource==='manual'?'دستی':(sh.priceSource==='api'?'API':'—')}</b>${sh.lastApiUpdate?' · آخرین بروزرسانی API: '+fmtDateTime(sh.lastApiUpdate):''}</div>
     <div class="alert-grid">
-      <div class="alert-mini">سود فعلی: <b>${alert.profitPct==null?'—':alert.profitPct.toFixed(1)+'٪'}</b><br>حد هشدار: ${Number(sh.profitAlertPct)>0?sh.profitAlertPct+'٪':'خاموش'}</div>
-      <div class="alert-mini">حجم/صف: <b>${alert.volumeToQueuePct==null?'—':alert.volumeToQueuePct.toFixed(1)+'٪'}</b><br>حد هشدار: ${Number(sh.volumeAlertPct)>0?sh.volumeAlertPct+'٪':'خاموش'}</div>
+      <div class="alert-mini">سود فعلی: <b>${alert.profitPct==null?'—':Math.round(alert.profitPct)+'٪'}</b><br>حد هشدار: ${Number(sh.profitAlertPct)>0?sh.profitAlertPct+'٪':'خاموش'}</div>
+      <div class="alert-mini">حجم/صف: <b>${alert.volumeToQueuePct==null?'—':Math.round(alert.volumeToQueuePct)+'٪'}</b><br>حد هشدار: ${Number(sh.volumeAlertPct)>0?sh.volumeAlertPct+'٪':'خاموش'}</div>
       <div class="alert-mini">صف خرید: <b>${sh.inQueue?'در صف':(sh.queueBroken?'شکسته':'—')}</b><br>هشدار شکست: ${sh.queueBreakAlert!==false?'روشن':'خاموش'}</div>
     </div>
     <div class="hint" style="margin-top:7px;margin-bottom:14px;">قیمت و اطلاعات صف فقط با زدن دکمه «بروزرسانی قیمت» از BRS API (بورس و فرابورس) دریافت می‌شود. اگر نماد پیدا نشد یا بسته بود، قیمت دستی/قبلی حفظ می‌شود.</div>
@@ -1037,7 +1079,7 @@ function openBuyForm(){
     </div>
     <div id="b_newshare" style="display:none;">
       <div class="field"><label>نام / نماد عرضه اولیه جدید</label><input id="b_newshare_name" placeholder="هر نامی که می‌خواهید"><div class="hint">اگر نام با نماد بورس/فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود.</div></div>
-      <div class="field"><label>قیمت دستی (تومان) — اختیاری</label><input id="b_newshare_price" class="num" inputmode="numeric" placeholder="برای نمادهای بسته"><div class="hint">با بروزرسانی موفق جایگزین می‌شود؛ وگرنه همین قیمت می‌ماند.</div></div>
+      <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="b_newshare_price" class="num" inputmode="numeric" placeholder="برای نمادهای بسته"><div class="hint">با بروزرسانی موفق جایگزین می‌شود؛ وگرنه همین قیمت می‌ماند.</div></div>
     </div>
 
     <div class="field"><label>درصد سود برای اعلان فروش</label><input id="b_profit_alert" class="num" inputmode="decimal" placeholder="مثلاً 20"><div class="hint">با رسیدن سود فعلی به این درصد، هشدار فروش فعال می‌شود.</div></div>
@@ -1046,7 +1088,7 @@ function openBuyForm(){
     <div class="field checkline"><input type="checkbox" id="b_queue_alert" checked><label style="margin:0;" for="b_queue_alert">هشدار شکستن صف خرید</label></div>
 
     <div class="field-row">
-      <div class="field"><label>قیمت خرید هر واحد (تومان)</label><input id="b_price" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="0"></div>
+      <div class="field"><label>قیمت خرید هر واحد (ریال)</label><input id="b_price" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="0"></div>
       <div class="field"><label>تعداد یکسان برای همه (اختیاری)</label><input id="b_qty" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="مثلاً 100"></div>
     </div>
     <div class="field"><label>تاریخ خرید</label><input id="b_date_display" class="jalali-date" readonly onclick="openJalaliPicker('b_date','b_date_display')" placeholder="انتخاب تاریخ"><input id="b_date" type="hidden" value="${todayInput()}"></div>
@@ -1126,7 +1168,7 @@ function openSellForm(){
       </select>
     </div>
     <div class="field-row">
-      <div class="field"><label>قیمت فروش هر واحد (تومان)</label><input id="s_price" class="num" inputmode="numeric" oninput="applyMasterToSellRows()" placeholder="0"></div>
+      <div class="field"><label>قیمت فروش هر واحد (ریال)</label><input id="s_price" class="num" inputmode="numeric" oninput="applyMasterToSellRows()" placeholder="0"></div>
       <div class="field"><label>تاریخ فروش</label><input id="s_date_display" class="jalali-date" readonly onclick="openJalaliPicker('s_date','s_date_display')" placeholder="انتخاب تاریخ"><input id="s_date" type="hidden" value="${todayInput()}"></div>
     </div>
     <div id="s_rows_wrap"></div>
@@ -1177,7 +1219,7 @@ function submitSell(){
     const price = Number($(`.s_price_row[data-lot="${lotId}"]`).value || $('#s_price').value);
     if(!qty || !price || qty>lot.quantity) { toast('مقدار یا قیمت نامعتبر در یکی از ردیف‌ها'); continue; }
 
-    addRecord('sales', {
+    const saleRec=addRecord('sales', {
       shareId, personId:lot.personId, purchaseId:lot.id,
       quantity:qty, buyPrice:lot.unitPrice, salePrice:price, date, createdAt:Date.now()
     });
@@ -1187,7 +1229,7 @@ function submitSell(){
       updateRecord('purchases', lot.id, {quantity: lot.quantity-qty});
       addRecord('purchases', {
         shareId, personId:lot.personId, quantity:qty, unitPrice:lot.unitPrice,
-        date:lot.date, status:'sold', soldAt:date, createdAt:Date.now()
+        date:lot.date, status:'sold', soldAt:date, createdAt:Date.now(), sourceSaleId:saleRec.id
       });
     }
     count++;
@@ -1229,12 +1271,14 @@ function renderHistory(){
     </div>
     ${filtered.length? `<div class="card">${filtered.map(it=>{
       const sh=shareById(it.shareId); const per=personById(it.personId);
-      return `<div class="row">
-        <div>
+      return `<div class="row" style="gap:8px;">
+        <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:13.5px;">${sh?escapeHtml(sh.name):'—'} · ${per?escapeHtml(per.name):'—'}</div>
           <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${fmtDate(it.ts)} · ${fmtNum(it.quantity)} واحد × ${fmtNum(it.price)}</div>
         </div>
         <span class="pill ${it.kind==='buy'?'accent':'pos'}">${it.kind==='buy'?'خرید':'فروش'}</span>
+        <button class="btn ghost sm" onclick="editHistoryItem('${it.kind}','${it.id}')">ویرایش</button>
+        <button class="btn ghost sm" style="color:var(--neg);" onclick="deleteHistoryItem('${it.kind}','${it.id}')">حذف</button>
       </div>`;
     }).join('')}</div>` : emptyBlock('چیزی یافت نشد', 'فیلتر یا عبارت جست‌وجو را تغییر دهید.')}
   `;
@@ -1243,28 +1287,90 @@ function renderHistory(){
 }
 function setFilter(k,v){ S.filters[k]=v; renderHistory(); }
 
+function reverseSale(sale){
+  const lot=S.purchases.find(p=>p.id===sale.purchaseId);
+  if(lot){
+    lot.quantity=Number(lot.quantity||0)+Number(sale.quantity||0);
+    lot.status='open';
+  }
+  const split=S.purchases.find(p=>p.sourceSaleId===sale.id);
+  if(split) S.purchases=S.purchases.filter(p=>p.id!==split.id);
+}
+function editHistoryItem(kind,id){
+  if(kind==='buy'){
+    const p=S.purchases.find(x=>x.id===id); if(!p)return;
+    openSheet('ویرایش تراکنش خرید',`<div class="field"><label>تعداد</label><input id="tx_qty" class="num" value="${p.quantity}"></div><div class="field"><label>قیمت خرید</label><input id="tx_price" class="num" value="${p.unitPrice}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${new Date(p.date||Date.now()).toISOString().slice(0,10)}"></div><button class="btn block" onclick="saveHistoryEdit('buy','${id}')">ذخیره</button>`);
+    initJalaliField('tx_date','tx_date_display');
+  }else{
+    const s=S.sales.find(x=>x.id===id); if(!s)return;
+    openSheet('ویرایش تراکنش فروش',`<div class="field"><label>تعداد فروش</label><input id="tx_qty" class="num" value="${s.quantity}"></div><div class="field"><label>قیمت فروش</label><input id="tx_price" class="num" value="${s.salePrice}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${new Date(s.date||Date.now()).toISOString().slice(0,10)}"></div><button class="btn block" onclick="saveHistoryEdit('sell','${id}')">ذخیره</button>`);
+    initJalaliField('tx_date','tx_date_display');
+  }
+}
+function saveHistoryEdit(kind,id){
+  const qty=Number($('#tx_qty').value), price=Number($('#tx_price').value), date=new Date($('#tx_date').value).getTime()||Date.now();
+  if(!qty||!price){toast('تعداد و مبلغ را درست وارد کنید');return;}
+  if(kind==='buy'){
+    const p=S.purchases.find(x=>x.id===id); if(!p)return;
+    p.quantity=qty; p.unitPrice=price; p.date=date;
+    S.sales.filter(x=>x.purchaseId===id).forEach(x=>x.buyPrice=price);
+  }else{
+    const s=S.sales.find(x=>x.id===id); if(!s)return;
+    reverseSale(s);
+    const lot=S.purchases.find(x=>x.id===s.purchaseId);
+    if(!lot || qty>Number(lot.quantity||0)){toast('تعداد فروش بیشتر از موجودی است');saveLocal();render();return;}
+    s.quantity=qty; s.salePrice=price; s.date=date; s.buyPrice=lot.unitPrice;
+    if(qty===lot.quantity) lot.status='sold';
+    else {lot.quantity-=qty; const split=Object.assign({id:uid4()+Date.now().toString(36)}, {shareId:s.shareId,personId:s.personId,quantity:qty,unitPrice:lot.unitPrice,date:lot.date,status:'sold',createdAt:Date.now(),sourceSaleId:s.id}); S.purchases.push(split);}
+  }
+  saveLocal();closeSheet();toast('تراکنش ویرایش شد');render();
+}
+function deleteHistoryItem(kind,id){
+  if(!confirm('این تراکنش حذف شود؟ تغییر آن در سود و زیان و موجودی اعمال می‌شود.'))return;
+  if(kind==='buy'){
+    const p=S.purchases.find(x=>x.id===id); if(!p)return;
+    const related=S.sales.filter(x=>x.purchaseId===id);
+    if(related.length){ if(!confirm('این خرید فروش ثبت‌شده مرتبط دارد. با حذف خرید، فروش‌های مرتبط هم حذف شوند؟'))return; related.forEach(x=>{const split=S.purchases.find(p=>p.sourceSaleId===x.id);if(split) S.purchases=S.purchases.filter(p=>p.id!==split.id);}); S.sales=S.sales.filter(x=>x.purchaseId!==id); }
+    S.purchases=S.purchases.filter(x=>x.id!==id);
+  }else{
+    const s=S.sales.find(x=>x.id===id); if(!s)return;
+    reverseSale(s); S.sales=S.sales.filter(x=>x.id!==id);
+  }
+  saveLocal();render();toast('تراکنش حذف شد');
+}
+
 /* ---------------- REPORTS ---------------- */
 let chartRef=null;
+function setReportPeriod(v){ S.reportPeriod=v; renderReports(); }
 function renderReports(){
-  const st = overallStats();
-  const perShare = S.shares.map(s=>({share:s, stats:shareStats(s.id)})).sort((a,b)=>b.stats.profit-a.stats.profit);
-  $('#app').innerHTML = `
+  const selected=S.reportPeriod||'all';
+  const key=selected==='all'?'all':selected;
+  const st=statsForPeriod(key);
+  const months=availableReportMonths();
+  const perShare=S.shares.map(sh=>{
+    const ps=S.purchases.filter(p=>p.shareId===sh.id && (selected==='all' || monthKey(p.date)===selected));
+    const ss=S.sales.filter(x=>x.shareId===sh.id && (selected==='all' || monthKey(x.date)===selected));
+    const invested=ps.reduce((a,p)=>a+buyCostWithFee(Number(p.quantity||0)*Number(p.unitPrice||0)),0);
+    const soldCost=ss.reduce((a,x)=>a+buyCostWithFee(Number(x.quantity||0)*Number(x.buyPrice||0)),0);
+    const revenue=ss.reduce((a,x)=>a+netSellValue(Number(x.quantity||0)*Number(x.salePrice||0)),0);
+    const profit=revenue-soldCost, profitPct=soldCost>0?profit/soldCost*100:0;
+    return {share:sh,stats:{invested,profit,profitPct}};
+  }).filter(x=>x.stats.invested||x.stats.profit).sort((a,b)=>b.stats.profit-a.stats.profit);
+  $('#app').innerHTML=`
+    <div class="section-title">گزارش مالی</div>
+    <div class="chip-row">
+      <button class="chip ${selected==='all'?'active':''}" onclick="setReportPeriod('all')">کل / تجمعی</button>
+      ${months.map(m=>`<button class="chip ${selected===m?'active':''}" onclick="setReportPeriod('${m}')">${monthLabel(m)}</button>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">دوره انتخاب‌شده: <b>${selected==='all'?'کل / تجمعی':monthLabel(selected)}</b></div>
     <div class="stats">
-      <div class="stat"><div class="lbl">مجموع سرمایه‌گذاری</div><div class="val">${fmtToman(st.invested)}</div></div>
+      <div class="stat"><div class="lbl">سرمایه‌گذاری</div><div class="val">${fmtToman(st.invested)}</div></div>
       <div class="stat"><div class="lbl">مجموع فروش</div><div class="val">${fmtToman(st.revenue)}</div></div>
       <div class="stat"><div class="lbl">سود خالص</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
-      <div class="stat"><div class="lbl">درصد سود کلی</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
+      <div class="stat"><div class="lbl">درصد سود</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
     </div>
-    <div class="section-title">جزئیات</div>
-    ${perShare.length? `<div class="card" style="padding:4px 10px;overflow:auto;">
-      <table><thead><tr><th>عرضه اولیه</th><th>سرمایه</th><th>سود</th><th>درصد</th></tr></thead>
-      <tbody>${perShare.map(x=>`<tr>
-        <td>${escapeHtml(x.share.name)}</td>
-        <td class="num">${fmtNum(x.stats.invested)}</td>
-        <td class="num" style="color:${x.stats.profit>=0?'var(--pos)':'var(--neg)'}">${fmtNum(x.stats.profit)}</td>
-        <td class="num" style="color:${x.stats.profitPct>=0?'var(--pos)':'var(--neg)'}">${x.stats.profitPct.toFixed(1)}٪</td>
-      </tr>`).join('')}</tbody></table>
-    </div>` : emptyBlock('داده‌ای برای گزارش نیست','بعد از ثبت اولین خرید و فروش، گزارش کامل می‌شود.')}
+    <div class="section-title">خلاصه عملکرد به تفکیک عرضه اولیه</div>
+    ${perShare.length?`<div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>عرضه اولیه</th><th>سرمایه</th><th>سود تجمعی</th><th>درصد</th></tr></thead><tbody>${perShare.map(x=>`<tr><td>${escapeHtml(x.share.name)}</td><td class="num">${fmtNum(x.stats.invested)}</td><td class="num" style="color:${x.stats.profit>=0?'var(--pos)':'var(--neg)'}">${fmtNum(x.stats.profit)}</td><td class="num">${x.stats.profitPct.toFixed(1)}٪</td></tr>`).join('')}</tbody></table></div>`:emptyBlock('داده‌ای برای گزارش نیست','بعد از ثبت اولین خرید و فروش، گزارش کامل می‌شود.')}
   `;
 }
 
@@ -1393,11 +1499,11 @@ function pickJalali(y,m,d){const iso=jalaliToIso(y,m,d),h=$('#'+JCAL.hidden),dis
 function closeJalaliPicker(){const ov=$('#jalaliPicker');if(ov)ov.remove();}
 function copyText(v){const t=String(v||'').replace(/\s/g,'');if(!t)return;navigator.clipboard?.writeText(t).then(()=>toast('شماره کارت کپی شد')).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove();toast('شماره کارت کپی شد');});}
 function cashForPerson(pid){let cash=0;S.cashTransactions.forEach(x=>{if(x.personId===pid)cash+=(x.type==='deposit'?1:-1)*Number(x.amount||0);});S.purchases.filter(x=>x.personId===pid).forEach(x=>cash-=Number(x.quantity||0)*Number(x.unitPrice||0));S.sales.filter(x=>x.personId===pid).forEach(x=>cash+=Number(x.quantity||0)*Number(x.salePrice||0));return cash;}
-function sharesValueForPerson(pid){return S.purchases.filter(x=>x.personId===pid&&x.status==='open').reduce((a,x)=>{const sh=shareById(x.shareId);return a+Number(x.quantity||0)*Number(sh?.currentPrice||x.unitPrice||0);},0);}
+function sharesValueForPerson(pid){return S.purchases.filter(x=>x.personId===pid&&x.status==='open').reduce((a,x)=>{const sh=shareById(x.shareId);return a+netSellValue(Number(x.quantity||0)*Number(sh?.currentPrice||x.unitPrice||0));},0);}
 function personBalance(pid){const cash=cashForPerson(pid),shares=sharesValueForPerson(pid),total=cash+shares,net=S.cashTransactions.filter(x=>x.personId===pid).reduce((a,x)=>a+(x.type==='deposit'?1:-1)*Number(x.amount||0),0),pl=total-net;return {cash,shares,total,pl,net};}
 function openCashForm(){
  if(!S.people.length){toast('اول باید حداقل یک شخص ثبت کنید');return;}
- openSheet('ثبت واریز / برداشت',`<div class="field-row"><div class="field"><label>نوع عملیات</label><select id="c_type"><option value="deposit">واریز</option><option value="withdraw">برداشت</option></select></div><div class="field"><label>تاریخ</label><input id="c_date_display" class="jalali-date" readonly onclick="openJalaliPicker('c_date','c_date_display')"><input id="c_date" type="hidden" value="${todayInput()}"></div></div><div class="field"><label>مبلغ یکسان برای همه (تومان)</label><input id="c_amount" class="num" inputmode="numeric" oninput="applyCashMaster()" placeholder="مثلاً 10,000,000"></div><div class="field"><label>اشخاص</label><div class="card" style="padding:6px 10px;overflow:auto;"><table><thead><tr><th></th><th>شخص</th><th>مبلغ</th></tr></thead><tbody>${S.people.map(p=>`<tr><td><input type="checkbox" class="c_check" data-pid="${p.id}" checked></td><td>${escapeHtml(p.name)}</td><td><input class="price-input num c_amount_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td></tr>`).join('')}</tbody></table></div></div><div class="hint">مبلغ اصلی برای همه اعمال می‌شود؛ در هر ردیف می‌توانید مبلغ همان شخص را تغییر دهید.</div><button class="btn block" onclick="submitCash()">ثبت عملیات</button>`);initJalaliField('c_date','c_date_display');
+ openSheet('ثبت واریز / برداشت',`<div class="field-row"><div class="field"><label>نوع عملیات</label><select id="c_type"><option value="deposit">واریز</option><option value="withdraw">برداشت</option></select></div><div class="field"><label>تاریخ</label><input id="c_date_display" class="jalali-date" readonly onclick="openJalaliPicker('c_date','c_date_display')"><input id="c_date" type="hidden" value="${todayInput()}"></div></div><div class="field"><label>مبلغ یکسان برای همه (ریال)</label><input id="c_amount" class="num" inputmode="numeric" oninput="applyCashMaster()" placeholder="مثلاً 10,000,000"></div><div class="field"><label>اشخاص</label><div class="card" style="padding:6px 10px;overflow:auto;"><table><thead><tr><th></th><th>شخص</th><th>مبلغ</th></tr></thead><tbody>${S.people.map(p=>`<tr><td><input type="checkbox" class="c_check" data-pid="${p.id}" checked></td><td>${escapeHtml(p.name)}</td><td><input class="price-input num c_amount_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td></tr>`).join('')}</tbody></table></div></div><div class="hint">مبلغ اصلی برای همه اعمال می‌شود؛ در هر ردیف می‌توانید مبلغ همان شخص را تغییر دهید.</div><button class="btn block" onclick="submitCash()">ثبت عملیات</button>`);initJalaliField('c_date','c_date_display');
 }
 function applyCashMaster(){const v=$('#c_amount')?.value;if(v)$$('.c_amount_row').forEach(x=>{if(!x.dataset.touched)x.value=v;});}
 document.addEventListener('input',e=>{if(e.target.classList?.contains('c_amount_row'))e.target.dataset.touched='1';});
