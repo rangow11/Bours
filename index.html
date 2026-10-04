@@ -803,14 +803,14 @@ function setDashboardPeriod(v){S.dashboardPeriod=v;renderDashboard();}
 
 /* سود/زیان فروش‌نرفته (موقعیت‌های باز با قیمت فعلی، بعد از کارمزد فروش) */
 function unrealizedStats(){
-  let cost=0,value=0,missing=0,count=0;
+  let costAll=0,cost=0,value=0,count=0; const missingNames=[];
   portfolioList().forEach(it=>{
-    count++;
-    if(it.value==null){ missing++; return; }
+    count++; costAll+=it.cost;
+    if(it.value==null){ missingNames.push(it.share.name); return; }
     cost+=it.cost; value+=it.value;
   });
   const profit=value-cost, pct=cost>0?profit/cost*100:0;
-  return {cost,value,profit,pct,missing,count};
+  return {costAll,cost,value,profit,pct,missing:missingNames.length,missingNames,count};
 }
 function renderUnrealizedBlock(){
   const u=unrealizedStats();
@@ -820,10 +820,10 @@ function renderUnrealizedBlock(){
     <div class="stats">
       <div class="stat"><div class="lbl">سود / زیان فعلی سهام</div><div class="val ${cls}">${fmtToman(u.profit)}</div></div>
       <div class="stat"><div class="lbl">درصد سود / زیان فعلی</div><div class="val ${cls}">${u.pct.toFixed(1)}٪</div></div>
-      <div class="stat"><div class="lbl">هزینه خرید سهام فعلی</div><div class="val">${fmtToman(u.cost)}</div></div>
-      <div class="stat"><div class="lbl">ارزش فعلی (پس از کارمزد فروش)</div><div class="val">${fmtToman(u.value)}</div></div>
+      <div class="stat"><div class="lbl">هزینه خرید سهام فعلی</div><div class="val">${fmtToman(u.costAll)}</div></div>
+      <div class="stat"><div class="lbl">ارزش فعلی ${u.missing?'(فقط سهام دارای قیمت)':'(پس از کارمزد فروش)'}</div><div class="val">${fmtToman(u.value)}</div></div>
     </div>
-    ${u.missing?`<div class="hint" style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;">قیمت ${u.missing} سهم هنوز مشخص نیست و در این محاسبه نیامده است.</div>`:''}`;
+    ${u.missing?`<div class="hint" style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.8;">قیمت فعلی این سهم مشخص نیست: <b>${u.missingNames.map(escapeHtml).join('، ')}</b>. هزینه خرید آن در کارت «هزینه خرید» آمده، ولی سود، درصد و ارزش فعلی فقط روی سهامی حساب شده که قیمت دارند (هزینه آن‌ها ${fmtToman(u.cost)}). با «بروزرسانی قیمت‌ها» یا ثبت قیمت دستی کامل می‌شود.</div>`:''}`;
 }
 /* مجموع دارایی / نقدینگی / سهام اشخاص (همان محاسبه بخش واریز و برداشت) */
 function cashTotals(){
