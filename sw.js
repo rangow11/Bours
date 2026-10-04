@@ -1,4 +1,4 @@
-const CACHE = 'sahm-v1';
+const CACHE = 'sahm-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 const CDN = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -22,7 +22,7 @@ self.addEventListener('fetch', e => {
 
   if (req.mode === 'navigate') { // صفحه: اول شبکه، بعد کش (برای بروزرسانی نسخه)
     e.respondWith(fetch(req).then(r => { caches.open(CACHE).then(c => c.put('index.html', r.clone())); return r; })
-      .catch(() => caches.match('index.html')));
+      .catch(() => caches.match('index.html', {ignoreSearch:true})));
     return;
   }
   e.respondWith(caches.match(req).then(hit => {

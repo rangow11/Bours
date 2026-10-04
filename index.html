@@ -6,10 +6,12 @@
 <title>دفتر سهام</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="دفتر سهام">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="دفتر سهام">
 <meta name="theme-color" content="#12160F">
 <link rel="manifest" href="manifest.webmanifest">
+<script>try{var __t=localStorage.getItem('sahm_theme');if(__t==='dark'||__t==='light')document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,8 +26,8 @@
   --radius:10px;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
 }
-:root:not([data-theme="light"]){
-  @media (prefers-color-scheme: dark){
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
     --bg:#12160F; --surface:#181D14; --surface-2:#20261A; --ink:#EDEAE0; --ink-soft:#A3A896;
     --line:#2C3323; --accent:#D79A4C; --accent-ink:#F3DFB8; --accent-soft:#3A2E17;
     --pos:#4CA772; --pos-soft:#1B3226; --neg:#D9604C; --neg-soft:#3A2019;
@@ -66,6 +68,21 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible{outline:2px soli
 .brand-name{font-weight:700; font-size:16px; letter-spacing:-.01em;}
 .icon-btn{width:38px;height:38px;border-radius:9px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
 .icon-btn svg{width:18px;height:18px;stroke:var(--ink);}
+.topbar-actions{display:flex;align-items:center;gap:8px;}
+#themeBtn svg{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#themeBtn .i-sun{display:none;} #themeBtn .i-moon{display:block;}
+:root[data-theme="dark"] #themeBtn .i-sun{display:block;} :root[data-theme="dark"] #themeBtn .i-moon{display:none;}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) #themeBtn .i-sun{display:block;} :root:not([data-theme="light"]) #themeBtn .i-moon{display:none;}
+}
+.dash-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.dash-tab{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 8px;text-align:center;min-width:0;color:var(--ink);}
+.dash-tab .lbl{font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:600;}
+.dash-tab .val{font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums;word-break:break-word;}
+.dash-tab.main{background:var(--accent-soft);border-color:var(--accent);}
+.dash-tab.main .val{color:var(--accent-ink);}
+.dash-tab:active{transform:scale(.98);}
+.jcal-today{margin-top:10px;display:flex;gap:8px;}
 
 main{max-width:920px; margin:0 auto; padding:16px 16px calc(84px + var(--safe-b)); min-height:70vh;}
 
@@ -223,9 +240,15 @@ tr:last-child td{border-bottom:none;}
 <div id="topbar">
   <div class="topbar-inner">
     <div class="brand"><div class="brand-mark">دس</div><div class="brand-name">دفتر سهام</div></div>
+    <div class="topbar-actions">
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="تغییر حالت روز / شب" title="حالت روز / شب">
+      <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"></path></svg>
+      <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+    </button>
     <button class="icon-btn" onclick="openSettings()" aria-label="تنظیمات">
       <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
     </button>
+    </div>
   </div>
 </div>
 
@@ -778,6 +801,35 @@ function renderPeriodToggle(selected, targetFn){
 
 function setDashboardPeriod(v){S.dashboardPeriod=v;renderDashboard();}
 
+/* سود/زیان فروش‌نرفته (موقعیت‌های باز با قیمت فعلی، بعد از کارمزد فروش) */
+function unrealizedStats(){
+  let cost=0,value=0,missing=0,count=0;
+  portfolioList().forEach(it=>{
+    count++;
+    if(it.value==null){ missing++; return; }
+    cost+=it.cost; value+=it.value;
+  });
+  const profit=value-cost, pct=cost>0?profit/cost*100:0;
+  return {cost,value,profit,pct,missing,count};
+}
+function renderUnrealizedBlock(){
+  const u=unrealizedStats();
+  if(!u.count) return `<div class="section-title">سود فروش‌نرفته (سهام فعلی)</div>${emptyBlock('سهام بازی وجود ندارد','بعد از ثبت خرید، سود و زیان لحظه‌ای سهام اینجا نشان داده می‌شود.')}`;
+  const cls=u.profit>=0?'pos':'neg';
+  return `<div class="section-title">سود فروش‌نرفته (سهام فعلی)</div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">سود / زیان فعلی سهام</div><div class="val ${cls}">${fmtToman(u.profit)}</div></div>
+      <div class="stat"><div class="lbl">درصد سود / زیان فعلی</div><div class="val ${cls}">${u.pct.toFixed(1)}٪</div></div>
+      <div class="stat"><div class="lbl">هزینه خرید سهام فعلی</div><div class="val">${fmtToman(u.cost)}</div></div>
+      <div class="stat"><div class="lbl">ارزش فعلی (پس از کارمزد فروش)</div><div class="val">${fmtToman(u.value)}</div></div>
+    </div>
+    ${u.missing?`<div class="hint" style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;">قیمت ${u.missing} سهم هنوز مشخص نیست و در این محاسبه نیامده است.</div>`:''}`;
+}
+/* مجموع دارایی / نقدینگی / سهام اشخاص (همان محاسبه بخش واریز و برداشت) */
+function cashTotals(){
+  return S.people.reduce((a,p)=>{const b=personBalance(p.id);a.cash+=b.cash;a.shares+=b.shares;a.total+=b.total;return a;},{cash:0,shares:0,total:0});
+}
+
 function renderDashboard(){
   const st = overallStats();
   const alerts = saleAlertShares();
@@ -785,7 +837,13 @@ function renderDashboard(){
   const period = S.dashboardPeriod||'current';
   const pst = statsForPeriod(period==='current'?currentJalaliMonthKey():'all');
 
+  const ct = cashTotals();
   $('#app').innerHTML = `
+    <div class="dash-tabs">
+      <button class="dash-tab main" onclick="setView('cash')"><div class="lbl">کل دارایی</div><div class="val">${fmtToman(ct.total)}</div></button>
+      <button class="dash-tab" onclick="setView('cash')"><div class="lbl">کل موجودی نقد</div><div class="val">${fmtToman(ct.cash)}</div></button>
+      <button class="dash-tab" onclick="setView('cash')"><div class="lbl">کل سهام</div><div class="val">${fmtToman(ct.shares)}</div></button>
+    </div>
     ${alerts.length? `<div class="banner info">
       <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
       <div>${alerts.length} عرضه اولیه به نقطه خروج تعریف‌شده رسیده‌اند: ${alerts.map(a=>a.name).join('، ')}</div>
@@ -798,6 +856,8 @@ function renderDashboard(){
       <div class="stat"><div class="lbl">سرمایه‌گذاری</div><div class="val">${fmtToman(pst.invested)}</div></div>
       <div class="stat"><div class="lbl">تعداد اشخاص / عرضه اولیه‌ها</div><div class="val">${st.peopleCount} / ${st.shareCount}</div></div>
     </div>
+
+    ${renderUnrealizedBlock()}
 
     <div class="section-title">دسترسی سریع</div>
     <div class="card">
@@ -886,8 +946,8 @@ function openLotEdit(lotId){
   openSheet(`ویرایش موقعیت — ${per?escapeHtml(per.name):''}`, `
     <div class="field"><label>عرضه اولیه</label><div style="padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--line);">${sh?escapeHtml(sh.name):'—'}</div></div>
     <div class="field-row">
-      <div class="field"><label>تعداد</label><input id="lot_qty" class="num" inputmode="numeric" value="${lot.quantity}"></div>
-      <div class="field"><label>قیمت خرید</label><input id="lot_price" class="num" inputmode="numeric" value="${lot.unitPrice}"></div>
+      <div class="field"><label>تعداد</label><input id="lot_qty" class="num money" inputmode="numeric" value="${fmtInput(lot.quantity)}"></div>
+      <div class="field"><label>قیمت خرید</label><input id="lot_price" class="num money" inputmode="numeric" value="${fmtInput(lot.unitPrice)}"></div>
     </div>
     <div class="field"><label>وضعیت</label>
       <select id="lot_status">
@@ -900,8 +960,8 @@ function openLotEdit(lotId){
   `);
 }
 function saveLotEdit(lotId){
-  const qty = Number($('#lot_qty').value);
-  const price = Number($('#lot_price').value);
+  const qty = numVal('#lot_qty');
+  const price = numVal('#lot_price');
   if(!qty || !price){ toast('تعداد و قیمت را درست وارد کنید'); return; }
   const personId = S.purchases.find(x=>x.id===lotId)?.personId;
   updateRecord('purchases', lotId, {quantity:qty, unitPrice:price, status:$('#lot_status').value});
@@ -979,7 +1039,7 @@ function openShareForm(id){
   const sh = id ? shareById(id) : null;
   openSheet(sh?'ویرایش عرضه اولیه':'عرضه اولیه جدید', `
     <div class="field"><label>نام / نماد *</label><input id="f_sname" value="${sh?escapeAttr(sh.name):''}" placeholder="هر نامی؛ برای بروزرسانی خودکار، نماد دقیق بورس/فرابورس"><div class="hint">اگر نام دقیقاً با یک نماد بورس یا فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود؛ وگرنه فقط قیمت دستی استفاده می‌شود.</div></div>
-    <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="f_price" class="num" inputmode="numeric" value="${sh?sh.currentPrice||'':''}" placeholder="مثلاً 12500"><div class="hint">برای نمادهای بسته که API قیمت نمی‌دهد. اگر بروزرسانی موفق باشد جایگزین می‌شود، در غیر این صورت همین قیمت می‌ماند.</div></div>
+    <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="f_price" class="num money" inputmode="numeric" value="${sh?fmtInput(sh.currentPrice):''}" placeholder="مثلاً 12500"><div class="hint">برای نمادهای بسته که API قیمت نمی‌دهد. اگر بروزرسانی موفق باشد جایگزین می‌شود، در غیر این صورت همین قیمت می‌ماند.</div></div>
     <div class="field"><label>درصد سود برای اعلان فروش</label><input id="f_profit_alert" class="num" inputmode="decimal" value="${sh?sh.profitAlertPct||'':''}" placeholder="مثلاً 20"><div class="hint">اگر سود فعلی نسبت به میانگین قیمت خرید به این درصد برسد، هشدار فروش فعال می‌شود.</div></div>
     <div class="field"><label>درصد حجم معاملات نسبت به صف خرید برای اعلان فروش</label><input id="f_volume_alert" class="num" inputmode="decimal" value="${sh?sh.volumeAlertPct||'':''}" placeholder="مثلاً 50"><div class="hint">حجم معاملات روز ÷ حجم صف خرید × 100. فقط وقتی سهم در صف خرید (قیمت سطر اول خرید = آستانه مجاز بالا) باشد محاسبه می‌شود.</div></div>
     <div class="field checkline"><input type="checkbox" id="f_queue_alert" ${(!sh||sh.queueBreakAlert!==false)?'checked':''}><label style="margin:0;" for="f_queue_alert">هشدار شکستن صف خرید</label></div>
@@ -1053,7 +1113,7 @@ function openShareDetail(id){
 }
 
 function quickUpdatePrice(id){
-  const v = Number($('#qp_price').value);
+  const v = numVal('#qp_price');
   if(!v){ toast('عدد معتبر وارد کنید'); return; }
   updateRecord('shares', id, {currentPrice:v, priceSource:'manual', updatedAt:Date.now()});
   toast('قیمت بروزرسانی شد');
@@ -1079,7 +1139,7 @@ function openBuyForm(){
     </div>
     <div id="b_newshare" style="display:none;">
       <div class="field"><label>نام / نماد عرضه اولیه جدید</label><input id="b_newshare_name" placeholder="هر نامی که می‌خواهید"><div class="hint">اگر نام با نماد بورس/فرابورس یکی باشد، قیمت با «بروزرسانی» دریافت می‌شود.</div></div>
-      <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="b_newshare_price" class="num" inputmode="numeric" placeholder="برای نمادهای بسته"><div class="hint">با بروزرسانی موفق جایگزین می‌شود؛ وگرنه همین قیمت می‌ماند.</div></div>
+      <div class="field"><label>قیمت دستی (ریال) — اختیاری</label><input id="b_newshare_price" class="num money" inputmode="numeric" placeholder="برای نمادهای بسته"><div class="hint">با بروزرسانی موفق جایگزین می‌شود؛ وگرنه همین قیمت می‌ماند.</div></div>
     </div>
 
     <div class="field"><label>درصد سود برای اعلان فروش</label><input id="b_profit_alert" class="num" inputmode="decimal" placeholder="مثلاً 20"><div class="hint">با رسیدن سود فعلی به این درصد، هشدار فروش فعال می‌شود.</div></div>
@@ -1088,8 +1148,8 @@ function openBuyForm(){
     <div class="field checkline"><input type="checkbox" id="b_queue_alert" checked><label style="margin:0;" for="b_queue_alert">هشدار شکستن صف خرید</label></div>
 
     <div class="field-row">
-      <div class="field"><label>قیمت خرید هر واحد (ریال)</label><input id="b_price" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="0"></div>
-      <div class="field"><label>تعداد یکسان برای همه (اختیاری)</label><input id="b_qty" class="num" inputmode="numeric" oninput="applyMasterToRows()" placeholder="مثلاً 100"></div>
+      <div class="field"><label>قیمت خرید هر واحد (ریال)</label><input id="b_price" class="num money" inputmode="numeric" oninput="applyMasterToRows()" placeholder="0"></div>
+      <div class="field"><label>تعداد یکسان برای همه (اختیاری)</label><input id="b_qty" class="num money" inputmode="numeric" oninput="applyMasterToRows()" placeholder="مثلاً 100"></div>
     </div>
     <div class="field"><label>تاریخ خرید</label><input id="b_date_display" class="jalali-date" readonly onclick="openJalaliPicker('b_date','b_date_display')" placeholder="انتخاب تاریخ"><input id="b_date" type="hidden" value="${todayInput()}"></div>
 
@@ -1100,8 +1160,8 @@ function openBuyForm(){
           <tr>
             <td><input type="checkbox" class="b_check" data-pid="${p.id}" checked></td>
             <td>${escapeHtml(p.name)}</td>
-            <td><input class="qty-input num b_qty_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
-            <td><input class="price-input num b_price_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
+            <td><input class="qty-input num b_qty_row money" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
+            <td><input class="price-input num b_price_row money" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td>
           </tr>`).join('')}</tbody></table>
       </div>
       <div class="hint">عدد «تعداد یکسان» و «قیمت خرید» بالا برای همه ردیف‌ها پر می‌شود؛ هر ردیف را می‌توانید جدا تغییر دهید.</div>
@@ -1116,8 +1176,11 @@ function openBuyForm(){
     if($('#b_volume_alert')) $('#b_volume_alert').value=sh?.volumeAlertPct||'';
     if($('#b_queue_alert')) $('#b_queue_alert').checked = sh ? sh.queueBreakAlert!==false : true;
   });
+  initJalaliField('b_date','b_date_display');
 }
-function todayInput(){ return new Date().toISOString().slice(0,10); }
+function tsToIso(ts){ const d=new Date(ts||Date.now()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayInput(){ return tsToIso(Date.now()); }
+function isoToTs(iso){ const t=new Date(String(iso||'')+'T12:00:00').getTime(); return isNaN(t)?Date.now():t; }
 function applyMasterToRows(){
   const q = $('#b_qty')?.value; const pr = $('#b_price')?.value;
   if(q) $$('.b_qty_row').forEach(i=>{ if(!i.dataset.touched) i.value=q; });
@@ -1131,7 +1194,7 @@ document.addEventListener('input', e=>{
 
 function submitBuy(){
   let shareId=$('#b_share').value;
-  const date=new Date($('#b_date').value).getTime()||Date.now();
+  const date=isoToTs($('#b_date').value);
   const profitAlertPct=Number($('#b_profit_alert').value)||0;
   const volumeAlertPct=Number($('#b_volume_alert').value)||0;
   const queueBreakAlert=$('#b_queue_alert').checked;
@@ -1148,7 +1211,7 @@ function submitBuy(){
   const checks=$$('.b_check:checked'); if(!checks.length){toast('حداقل یک شخص را انتخاب کنید');return;}
   let count=0;
   for(const c of checks){
-    const pid=c.dataset.pid,qty=Number($(`.b_qty_row[data-pid="${pid}"]`).value||$('#b_qty').value),price=Number($(`.b_price_row[data-pid="${pid}"]`).value||$('#b_price').value);
+    const pid=c.dataset.pid,qty=numVal($(`.b_qty_row[data-pid="${pid}"]`))||numVal('#b_qty'),price=numVal($(`.b_price_row[data-pid="${pid}"]`))||numVal('#b_price');
     if(!qty||!price)continue;
     addRecord('purchases',{shareId,personId:pid,quantity:qty,unitPrice:price,date,status:'open',createdAt:Date.now()});count++;
   }
@@ -1168,7 +1231,7 @@ function openSellForm(){
       </select>
     </div>
     <div class="field-row">
-      <div class="field"><label>قیمت فروش هر واحد (ریال)</label><input id="s_price" class="num" inputmode="numeric" oninput="applyMasterToSellRows()" placeholder="0"></div>
+      <div class="field"><label>قیمت فروش هر واحد (ریال)</label><input id="s_price" class="num money" inputmode="numeric" oninput="applyMasterToSellRows()" placeholder="0"></div>
       <div class="field"><label>تاریخ فروش</label><input id="s_date_display" class="jalali-date" readonly onclick="openJalaliPicker('s_date','s_date_display')" placeholder="انتخاب تاریخ"><input id="s_date" type="hidden" value="${todayInput()}"></div>
     </div>
     <div id="s_rows_wrap"></div>
@@ -1194,8 +1257,8 @@ function renderSellRows(){
           <td><input type="checkbox" class="s_check" data-lot="${l.id}"></td>
           <td>${per?escapeHtml(per.name):'—'}</td>
           <td class="num">${fmtNum(l.quantity)}</td>
-          <td><input class="qty-input num s_qty_row" data-lot="${l.id}" data-max="${l.quantity}" inputmode="numeric" placeholder="${l.quantity}"></td>
-          <td><input class="price-input num s_price_row" data-lot="${l.id}" inputmode="numeric" placeholder="—"></td>
+          <td><input class="qty-input num s_qty_row money" data-lot="${l.id}" data-max="${l.quantity}" inputmode="numeric" placeholder="${l.quantity}"></td>
+          <td><input class="price-input num s_price_row money" data-lot="${l.id}" inputmode="numeric" placeholder="—"></td>
         </tr>`;
       }).join('')}</tbody></table>
     </div>
@@ -1206,7 +1269,7 @@ function renderSellRows(){
 function submitSell(){
   const shareId = $('#s_share').value;
   if(!shareId){ toast('عرضه اولیه را انتخاب کنید'); return; }
-  const date = new Date($('#s_date').value).getTime() || Date.now();
+  const date = isoToTs($('#s_date').value);
   const checks = $$('.s_check:checked');
   if(!checks.length){ toast('حداقل یک ردیف را انتخاب کنید'); return; }
   let count = 0;
@@ -1215,8 +1278,8 @@ function submitSell(){
     const lot = S.purchases.find(p=>p.id===lotId);
     if(!lot) continue;
     const qtyInput = $(`.s_qty_row[data-lot="${lotId}"]`);
-    const qty = Number(qtyInput.value || lot.quantity);
-    const price = Number($(`.s_price_row[data-lot="${lotId}"]`).value || $('#s_price').value);
+    const qty = numVal(qtyInput) || lot.quantity;
+    const price = numVal($(`.s_price_row[data-lot="${lotId}"]`)) || numVal('#s_price');
     if(!qty || !price || qty>lot.quantity) { toast('مقدار یا قیمت نامعتبر در یکی از ردیف‌ها'); continue; }
 
     const saleRec=addRecord('sales', {
@@ -1299,16 +1362,16 @@ function reverseSale(sale){
 function editHistoryItem(kind,id){
   if(kind==='buy'){
     const p=S.purchases.find(x=>x.id===id); if(!p)return;
-    openSheet('ویرایش تراکنش خرید',`<div class="field"><label>تعداد</label><input id="tx_qty" class="num" value="${p.quantity}"></div><div class="field"><label>قیمت خرید</label><input id="tx_price" class="num" value="${p.unitPrice}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${new Date(p.date||Date.now()).toISOString().slice(0,10)}"></div><button class="btn block" onclick="saveHistoryEdit('buy','${id}')">ذخیره</button>`);
+    openSheet('ویرایش تراکنش خرید',`<div class="field"><label>تعداد</label><input id="tx_qty" class="num money" inputmode="numeric" value="${fmtInput(p.quantity)}"></div><div class="field"><label>قیمت خرید</label><input id="tx_price" class="num money" inputmode="numeric" value="${fmtInput(p.unitPrice)}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${tsToIso(p.date)}"></div><button class="btn block" onclick="saveHistoryEdit('buy','${id}')">ذخیره</button>`);
     initJalaliField('tx_date','tx_date_display');
   }else{
     const s=S.sales.find(x=>x.id===id); if(!s)return;
-    openSheet('ویرایش تراکنش فروش',`<div class="field"><label>تعداد فروش</label><input id="tx_qty" class="num" value="${s.quantity}"></div><div class="field"><label>قیمت فروش</label><input id="tx_price" class="num" value="${s.salePrice}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${new Date(s.date||Date.now()).toISOString().slice(0,10)}"></div><button class="btn block" onclick="saveHistoryEdit('sell','${id}')">ذخیره</button>`);
+    openSheet('ویرایش تراکنش فروش',`<div class="field"><label>تعداد فروش</label><input id="tx_qty" class="num money" inputmode="numeric" value="${fmtInput(s.quantity)}"></div><div class="field"><label>قیمت فروش</label><input id="tx_price" class="num money" inputmode="numeric" value="${fmtInput(s.salePrice)}"></div><div class="field"><label>تاریخ</label><input id="tx_date_display" class="jalali-date" readonly onclick="openJalaliPicker('tx_date','tx_date_display')"><input id="tx_date" type="hidden" value="${tsToIso(s.date)}"></div><button class="btn block" onclick="saveHistoryEdit('sell','${id}')">ذخیره</button>`);
     initJalaliField('tx_date','tx_date_display');
   }
 }
 function saveHistoryEdit(kind,id){
-  const qty=Number($('#tx_qty').value), price=Number($('#tx_price').value), date=new Date($('#tx_date').value).getTime()||Date.now();
+  const qty=numVal('#tx_qty'), price=numVal('#tx_price'), date=isoToTs($('#tx_date').value);
   if(!qty||!price){toast('تعداد و مبلغ را درست وارد کنید');return;}
   if(kind==='buy'){
     const p=S.purchases.find(x=>x.id===id); if(!p)return;
@@ -1369,6 +1432,7 @@ function renderReports(){
       <div class="stat"><div class="lbl">سود خالص</div><div class="val ${st.profit>=0?'pos':'neg'}">${fmtToman(st.profit)}</div></div>
       <div class="stat"><div class="lbl">درصد سود</div><div class="val ${st.profitPct>=0?'pos':'neg'}">${st.profitPct.toFixed(1)}٪</div></div>
     </div>
+    ${renderUnrealizedBlock()}
     <div class="section-title">خلاصه عملکرد به تفکیک عرضه اولیه</div>
     ${perShare.length?`<div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>عرضه اولیه</th><th>سرمایه</th><th>سود تجمعی</th><th>درصد</th></tr></thead><tbody>${perShare.map(x=>`<tr><td>${escapeHtml(x.share.name)}</td><td class="num">${fmtNum(x.stats.invested)}</td><td class="num" style="color:${x.stats.profit>=0?'var(--pos)':'var(--neg)'}">${fmtNum(x.stats.profit)}</td><td class="num">${x.stats.profitPct.toFixed(1)}٪</td></tr>`).join('')}</tbody></table></div>`:emptyBlock('داده‌ای برای گزارش نیست','بعد از ثبت اولین خرید و فروش، گزارش کامل می‌شود.')}
   `;
@@ -1469,20 +1533,47 @@ function escapeAttr(s){ return escapeHtml(s); }
 
 /* ---------------- JALALI DATE PICKER / CASH LEDGER ---------------- */
 const JMONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const _jdiv=(a,b)=>Math.trunc(a/b), _jmod=(a,b)=>a-Math.floor(a/b)*b;
+const _JBREAKS=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+function _jalCal(jy, withoutLeap){
+  const bl=_JBREAKS.length, gy=jy+621; let leapJ=-14, jp=_JBREAKS[0], jm, jump=0, n, i;
+  for(i=1;i<bl;i++){
+    jm=_JBREAKS[i]; jump=jm-jp;
+    if(jy<jm) break;
+    leapJ+=_jdiv(jump,33)*8+_jdiv(_jmod(jump,33),4); jp=jm;
+  }
+  n=jy-jp;
+  leapJ+=_jdiv(n,33)*8+_jdiv(_jmod(n,33)+3,4);
+  if(_jmod(jump,33)===4 && jump-n===4) leapJ+=1;
+  const leapG=_jdiv(gy,4)-_jdiv((_jdiv(gy,100)+1)*3,4)-150;
+  const march=20+leapJ-leapG;
+  if(withoutLeap) return {gy,march};
+  if(jump-n<6) n=n-jump+_jdiv(jump+4,33)*33;
+  let leap=_jmod(_jmod(n+1,33)-1,4); if(leap===-1) leap=4;
+  return {leap,gy,march};
+}
+function _g2d(gy,gm,gd){
+  let d=_jdiv((gy+_jdiv(gm-8,6)+100100)*1461,4)+_jdiv(153*_jmod(gm+9,12)+2,5)+gd-34840408;
+  d=d-_jdiv(_jdiv(gy+100100+_jdiv(gm-8,6),100)*3,4)+752; return d;
+}
+function _d2g(jdn){
+  let j=4*jdn+139361631; j=j+_jdiv(_jdiv(4*jdn+183187720,146097)*3,4)*4-3908;
+  const i=_jdiv(_jmod(j,1461),4)*5+308, gd=_jdiv(_jmod(i,153),5)+1, gm=_jmod(_jdiv(i,153),12)+1, gy=_jdiv(j,1461)-100100+_jdiv(8-gm,6);
+  return [gy,gm,gd];
+}
 function g2j(gy,gm,gd){
-  const gdm=[0,31,59,90,120,151,181,212,243,273,304,334], gy2=gm>2?gy+1:gy;
-  let days=355666+365*gy+Math.floor((gy2+3)/4)-Math.floor((gy2+99)/100)+Math.floor((gy2+399)/400)+gd+gdm[gm-1];
-  let jy=-1597+33*Math.floor(days/12053); days%=12053; jy+=4*Math.floor(days/1461); days%=1461;
-  if(days>365){jy+=Math.floor((days-1)/365);days=(days-1)%365;}
-  const jm=days<186?1+Math.floor(days/31):7+Math.floor((days-186)/30), jd=1+(days<186?days%31:(days-186)%30); return [jy,jm,jd];
+  const jdn=_g2d(gy,gm,gd); let jy=_d2g(jdn)[0]-621; const r=_jalCal(jy,false), jdn1f=_g2d(r.gy,3,r.march);
+  let k=jdn-jdn1f, jm, jd;
+  if(k>=0){ if(k<=185){ return [jy,1+_jdiv(k,31),_jmod(k,31)+1]; } k-=186; }
+  else{ jy-=1; k+=179; if(r.leap===1) k+=1; }
+  jm=7+_jdiv(k,30); jd=_jmod(k,30)+1; return [jy,jm,jd];
 }
 function j2g(jy,jm,jd){
-  let jy2=jy+1597, days=-355668+365*jy2+Math.floor(jy2/33)*8+Math.floor(((jy2%33)+3)/4)+jd+(jm<7?(jm-1)*31:(jm-7)*30+186);
-  let gy=400*Math.floor(days/146097); days%=146097; if(days>36524){gy+=100*Math.floor(--days/36524);days%=36524;if(days>=365)days++;}
-  gy+=4*Math.floor(days/1461); days%=1461; if(days>365){gy+=Math.floor((days-1)/365);days=(days-1)%365;}
-  const gd=days+1, leap=(gy%4===0&&gy%100!==0)||gy%400===0, md=[0,31,leap?29:28,31,30,31,30,31,31,30,31,30,31]; let gm=1; while(gd>md[gm]){days-=md[gm];gm++;} return [gy,gm,gd];
+  const r=_jalCal(jy,true);
+  return _d2g(_g2d(r.gy,3,r.march)+(jm-1)*31-_jdiv(jm,7)*(jm-7)+jd-1);
 }
-function jDays(y,m){ if(m<=6)return 31; if(m<=11)return 30; return (new Date(j2g(y,12,1)[0],j2g(y,12,1)[1]-1,j2g(y,12,1)[2]).getTime()===new Date(j2g(y+1,1,1)[0],j2g(y+1,1,1)[1]-1,j2g(y+1,1,1)[2]).getTime()-30*86400000)?30:29; }
+function isJLeap(jy){ return _jalCal(jy,false).leap===0; }
+function jDays(y,m){ if(m<=6)return 31; if(m<=11)return 30; return isJLeap(y)?30:29; }
 function gregToJString(iso){const [y,m,d]=iso.split('-').map(Number),j=g2j(y,m,d);return `${j[0]}/${String(j[1]).padStart(2,'0')}/${String(j[2]).padStart(2,'0')}`;}
 function jalaliToIso(y,m,d){const g=j2g(y,m,d);return `${g[0]}-${String(g[1]).padStart(2,'0')}-${String(g[2]).padStart(2,'0')}`;}
 function initJalaliField(hiddenId,displayId){const h=$('#'+hiddenId),d=$('#'+displayId);if(!h||!d)return; if(!h.value)h.value=todayInput(); d.value=gregToJString(h.value);}
@@ -1491,11 +1582,12 @@ function openJalaliPicker(hiddenId,displayId){const h=$('#'+hiddenId);if(!h)retu
 function renderJalaliPicker(){
   let ov=$('#jalaliPicker');if(!ov){ov=document.createElement('div');ov.id='jalaliPicker';ov.className='jalali-picker';document.body.appendChild(ov);} const now=g2j(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate()); const selected=$('#'+JCAL.hidden)?.value; const sj=selected?g2j(...selected.split('-').map(Number)):[];
   const firstIso=jalaliToIso(JCAL.hy,JCAL.hm,1), wd=(new Date(firstIso+'T00:00:00').getDay()+1)%7; let days=''; for(let i=0;i<wd;i++)days+='<div></div>'; for(let d=1;d<=jDays(JCAL.hy,JCAL.hm);d++){const iso=jalaliToIso(JCAL.hy,JCAL.hm,d);const cls=(JCAL.hy===now[0]&&JCAL.hm===now[1]&&d===now[2]?' today':'')+(sj.length&&JCAL.hy===sj[0]&&JCAL.hm===sj[1]&&d===sj[2]?' selected':'');days+=`<button class="jcal-day${cls}" onclick="pickJalali(${JCAL.hy},${JCAL.hm},${d})">${d}</button>`;}
-  ov.innerHTML=`<div class="jcal" onclick="event.stopPropagation()"><div class="jcal-head"><button class="jcal-nav" onclick="moveJalali(-1)">‹</button><div class="jcal-title">${JMONTHS[JCAL.hm-1]} ${JCAL.hy}</div><button class="jcal-nav" onclick="moveJalali(1)">›</button></div><div class="jcal-week"><div>شنبه</div><div>یکشنبه</div><div>دوشنبه</div><div>سه‌شنبه</div><div>چهارشنبه</div><div>پنجشنبه</div><div>جمعه</div></div><div class="jcal-days">${days}</div><button class="btn secondary block" style="margin-top:10px;" onclick="closeJalaliPicker()">انصراف</button></div>`;
+  ov.innerHTML=`<div class="jcal" onclick="event.stopPropagation()"><div class="jcal-head"><button class="jcal-nav" onclick="moveJalali(-1)">‹</button><div class="jcal-title">${JMONTHS[JCAL.hm-1]} ${JCAL.hy}</div><button class="jcal-nav" onclick="moveJalali(1)">›</button></div><div class="jcal-week"><div>شنبه</div><div>یکشنبه</div><div>دوشنبه</div><div>سه‌شنبه</div><div>چهارشنبه</div><div>پنجشنبه</div><div>جمعه</div></div><div class="jcal-days">${days}</div><div class="jcal-today"><button class="btn secondary" style="flex:1;" onclick="pickToday()">امروز</button><button class="btn secondary" style="flex:1;" onclick="closeJalaliPicker()">انصراف</button></div></div>`;
   ov.onclick=closeJalaliPicker;
 }
 function moveJalali(n){JCAL.hm+=n;if(JCAL.hm>12){JCAL.hm=1;JCAL.hy++;}if(JCAL.hm<1){JCAL.hm=12;JCAL.hy--;}renderJalaliPicker();}
 function pickJalali(y,m,d){const iso=jalaliToIso(y,m,d),h=$('#'+JCAL.hidden),disp=$('#'+JCAL.display);if(h)h.value=iso;if(disp)disp.value=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;closeJalaliPicker();}
+function pickToday(){const n=new Date(),j=g2j(n.getFullYear(),n.getMonth()+1,n.getDate());pickJalali(j[0],j[1],j[2]);}
 function closeJalaliPicker(){const ov=$('#jalaliPicker');if(ov)ov.remove();}
 function copyText(v){const t=String(v||'').replace(/\s/g,'');if(!t)return;navigator.clipboard?.writeText(t).then(()=>toast('شماره کارت کپی شد')).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove();toast('شماره کارت کپی شد');});}
 function cashForPerson(pid){let cash=0;S.cashTransactions.forEach(x=>{if(x.personId===pid)cash+=(x.type==='deposit'?1:-1)*Number(x.amount||0);});S.purchases.filter(x=>x.personId===pid).forEach(x=>cash-=Number(x.quantity||0)*Number(x.unitPrice||0));S.sales.filter(x=>x.personId===pid).forEach(x=>cash+=Number(x.quantity||0)*Number(x.salePrice||0));return cash;}
@@ -1503,15 +1595,61 @@ function sharesValueForPerson(pid){return S.purchases.filter(x=>x.personId===pid
 function personBalance(pid){const cash=cashForPerson(pid),shares=sharesValueForPerson(pid),total=cash+shares,net=S.cashTransactions.filter(x=>x.personId===pid).reduce((a,x)=>a+(x.type==='deposit'?1:-1)*Number(x.amount||0),0),pl=total-net;return {cash,shares,total,pl,net};}
 function openCashForm(){
  if(!S.people.length){toast('اول باید حداقل یک شخص ثبت کنید');return;}
- openSheet('ثبت واریز / برداشت',`<div class="field-row"><div class="field"><label>نوع عملیات</label><select id="c_type"><option value="deposit">واریز</option><option value="withdraw">برداشت</option></select></div><div class="field"><label>تاریخ</label><input id="c_date_display" class="jalali-date" readonly onclick="openJalaliPicker('c_date','c_date_display')"><input id="c_date" type="hidden" value="${todayInput()}"></div></div><div class="field"><label>مبلغ یکسان برای همه (ریال)</label><input id="c_amount" class="num" inputmode="numeric" oninput="applyCashMaster()" placeholder="مثلاً 10,000,000"></div><div class="field"><label>اشخاص</label><div class="card" style="padding:6px 10px;overflow:auto;"><table><thead><tr><th></th><th>شخص</th><th>مبلغ</th></tr></thead><tbody>${S.people.map(p=>`<tr><td><input type="checkbox" class="c_check" data-pid="${p.id}" checked></td><td>${escapeHtml(p.name)}</td><td><input class="price-input num c_amount_row" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td></tr>`).join('')}</tbody></table></div></div><div class="hint">مبلغ اصلی برای همه اعمال می‌شود؛ در هر ردیف می‌توانید مبلغ همان شخص را تغییر دهید.</div><button class="btn block" onclick="submitCash()">ثبت عملیات</button>`);initJalaliField('c_date','c_date_display');
+ openSheet('ثبت واریز / برداشت',`<div class="field-row"><div class="field"><label>نوع عملیات</label><select id="c_type"><option value="deposit">واریز</option><option value="withdraw">برداشت</option></select></div><div class="field"><label>تاریخ</label><input id="c_date_display" class="jalali-date" readonly onclick="openJalaliPicker('c_date','c_date_display')"><input id="c_date" type="hidden" value="${todayInput()}"></div></div><div class="field"><label>مبلغ یکسان برای همه (ریال)</label><input id="c_amount" class="num money" inputmode="numeric" oninput="applyCashMaster()" placeholder="مثلاً 10,000,000"></div><div class="field"><label>اشخاص</label><div class="card" style="padding:6px 10px;overflow:auto;"><table><thead><tr><th></th><th>شخص</th><th>مبلغ</th></tr></thead><tbody>${S.people.map(p=>`<tr><td><input type="checkbox" class="c_check" data-pid="${p.id}" checked></td><td>${escapeHtml(p.name)}</td><td><input class="price-input num c_amount_row money" data-pid="${p.id}" inputmode="numeric" placeholder="—"></td></tr>`).join('')}</tbody></table></div></div><div class="hint">مبلغ اصلی برای همه اعمال می‌شود؛ در هر ردیف می‌توانید مبلغ همان شخص را تغییر دهید.</div><button class="btn block" onclick="submitCash()">ثبت عملیات</button>`);initJalaliField('c_date','c_date_display');
 }
 function applyCashMaster(){const v=$('#c_amount')?.value;if(v)$$('.c_amount_row').forEach(x=>{if(!x.dataset.touched)x.value=v;});}
 document.addEventListener('input',e=>{if(e.target.classList?.contains('c_amount_row'))e.target.dataset.touched='1';});
-function submitCash(){const type=$('#c_type').value,date=new Date($('#c_date').value).getTime()||Date.now(),checks=$$('.c_check:checked');let count=0;for(const c of checks){const amount=Number($(`.c_amount_row[data-pid="${c.dataset.pid}"]`).value||$('#c_amount').value);if(!amount||amount<0)continue;addRecord('cashTransactions',{personId:c.dataset.pid,type,amount,date,createdAt:Date.now()});count++;}if(!count){toast('برای هیچ شخصی مبلغ معتبر وارد نشده');return;}closeSheet();toast(`${type==='deposit'?'واریز':'برداشت'} برای ${count} نفر ثبت شد`);}
+function submitCash(){const type=$('#c_type').value,date=isoToTs($('#c_date').value),checks=$$('.c_check:checked');let count=0;for(const c of checks){const amount=numVal($(`.c_amount_row[data-pid="${c.dataset.pid}"]`))||numVal('#c_amount');if(!amount||amount<0)continue;addRecord('cashTransactions',{personId:c.dataset.pid,type,amount,date,createdAt:Date.now()});count++;}if(!count){toast('برای هیچ شخصی مبلغ معتبر وارد نشده');return;}closeSheet();toast(`${type==='deposit'?'واریز':'برداشت'} برای ${count} نفر ثبت شد`);}
 function renderCash(){
  const totals=S.people.reduce((a,p)=>{const b=personBalance(p.id);a.cash+=b.cash;a.shares+=b.shares;a.total+=b.total;return a;},{cash:0,shares:0,total:0});
  $('#app').innerHTML=`<div class="section-title">موجودی اشخاص</div><div class="cash-summary"><div class="stat"><div class="lbl">نقدینگی</div><div class="val">${fmtToman(totals.cash)}</div></div><div class="stat"><div class="lbl">ارزش سهام</div><div class="val">${fmtToman(totals.shares)}</div></div><div class="stat"><div class="lbl">کل موجودی</div><div class="val">${fmtToman(totals.total)}</div></div></div><div class="refresh-row"><div class="section-title" style="margin:0;">تفکیک اشخاص</div><button class="btn secondary sm" onclick="openCashForm()">ثبت جدید</button></div><div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>شخص</th><th>نقدینگی</th><th>سهام</th><th>کل</th><th>سود/زیان</th></tr></thead><tbody>${S.people.map(p=>{const b=personBalance(p.id);return `<tr><td>${escapeHtml(p.name)}</td><td class="num">${fmtNum(b.cash)}</td><td class="num">${fmtNum(b.shares)}</td><td class="num"><b>${fmtNum(b.total)}</b></td><td class="num" style="color:${b.pl>=0?'var(--pos)':'var(--neg)'}">${fmtNum(b.pl)}</td></tr>`;}).join('')}</tbody></table></div><div class="section-title">آخرین واریز و برداشت</div>${S.cashTransactions.length?`<div class="card" style="padding:4px 10px;overflow:auto;"><table><thead><tr><th>شخص</th><th>نوع</th><th>مبلغ</th><th>تاریخ</th></tr></thead><tbody>${[...S.cashTransactions].sort((a,b)=>(b.date||0)-(a.date||0)).map(x=>{const p=personById(x.personId);return `<tr><td>${p?escapeHtml(p.name):'—'}</td><td><span class="pill ${x.type==='deposit'?'pos':'neg'}">${x.type==='deposit'?'واریز':'برداشت'}</span></td><td class="num">${fmtNum(x.amount)}</td><td>${fmtDate(x.date)}</td></tr>`}).join('')}</tbody></table></div>`:emptyBlock('هنوز تراکنش نقدی ثبت نشده','برای ثبت گروهی واریز یا برداشت روی «ثبت جدید» بزنید.')}`;
 }
+
+/* ---------------- theme (روز / شب) ---------------- */
+function effectiveTheme(){
+  const t=document.documentElement.getAttribute('data-theme');
+  if(t==='dark'||t==='light') return t;
+  return (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+function syncThemeColor(){
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', effectiveTheme()==='dark' ? '#12160F' : '#EEF0EA');
+}
+function toggleTheme(){
+  const next = effectiveTheme()==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('sahm_theme', next); }catch(e){}
+  syncThemeColor();
+  toast(next==='dark' ? 'حالت شب فعال شد' : 'حالت روز فعال شد');
+}
+syncThemeColor();
+if(window.matchMedia) try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeColor); }catch(e){}
+
+/* ---------------- money inputs: جداکننده سه‌رقمی ---------------- */
+function numVal(elOrSel){
+  const el = typeof elOrSel==='string' ? $(elOrSel) : elOrSel;
+  if(!el) return 0;
+  const n = Number(normalizeDigits(el.value).replace(/[^0-9.]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function fmtInput(n){ return (n===null||n===undefined||n===''||isNaN(Number(n))) ? '' : Number(n).toLocaleString('en-US',{maximumFractionDigits:6}); }
+document.addEventListener('input', e=>{
+  const el=e.target;
+  if(!el.classList || !el.classList.contains('money')) return;
+  const raw = normalizeDigits(el.value);
+  const caret = el.selectionStart==null ? raw.length : el.selectionStart;
+  const digitsBefore = raw.slice(0,caret).replace(/[^0-9]/g,'').length;
+  const digits = raw.replace(/[^0-9]/g,'').replace(/^0+(?=\d)/,'');
+  const out = digits ? Number(digits).toLocaleString('en-US') : '';
+  // اعداد خیلی بزرگ (بیش از ۱۵ رقم) را بدون تبدیل عددی فرمت می‌کنیم
+  const fin = digits.length>15 ? digits.replace(/\B(?=(\d{3})+(?!\d))/g,',') : out;
+  if(fin===el.value) return;
+  el.value = fin;
+  // بازگرداندن مکان نشانگر
+  let pos=0, seen=0;
+  while(pos<fin.length && seen<digitsBefore){ if(/\d/.test(fin[pos])) seen++; pos++; }
+  try{ el.setSelectionRange(pos,pos); }catch(_){}
+});
 
 initNavHistory();
 init();
